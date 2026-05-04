@@ -18,6 +18,44 @@ const DEFAULT_TYPE = { label: 'Espace', bg: 'rgba(255,255,255,0.08)', text: 'rgb
 const STATE_MAP = { 3: 'terminee', 4: 'terminee', 6: 'annulee' };
 const MONTH_ABBR = ['JANV', 'FÉVR', 'MARS', 'AVRI', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEPT', 'OCT', 'NOV', 'DÉC'];
 
+const TYPE_OPTIONS = [
+  { value: '', label: 'Type' },
+  { value: 'openspace-classique', label: 'Open Space' },
+  { value: 'openspace-specialise', label: 'Openspace spé.' },
+  { value: 'bureau', label: 'Bureau' },
+  { value: 'phonebox', label: 'Phonebox' },
+  { value: 'meetingroom', label: 'Meeting Room' },
+  { value: 'parking-electrique', label: 'Parking Él.' },
+  { value: 'parking-thermique', label: 'Parking' },
+];
+
+const STATUS_OPTIONS = [
+  { value: '', label: 'Statut' },
+  { value: 'terminee', label: 'Terminée' },
+  { value: 'annulee', label: 'Annulée' },
+];
+
+const EMPTY_FILTERS = Object.freeze({ status: '', type: '', dateFrom: '', dateTo: '' });
+
+function countActiveFilters(f) {
+  let n = 0;
+  if (f.dateFrom || f.dateTo) n++;
+  if (f.type) n++;
+  if (f.status) n++;
+  return n;
+}
+
+function buildQuery(f) {
+  let q = 'opened_by=javascript:gs.getUserID()';
+  if (f.status === 'annulee') q += '^state=6';
+  else if (f.status === 'terminee') q += '^stateIN3,4';
+  else q += '^stateIN3,4,6';
+  if (f.dateFrom) q += `^opened_at>=${f.dateFrom}`;
+  if (f.dateTo) q += `^opened_at<=${f.dateTo}`;
+  if (f.type) q += `^short_descriptionLIKE${f.type}`;
+  return q;
+}
+
 function getMonthLabel(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
@@ -80,6 +118,8 @@ const LightningIcon = () => (
   </svg>
 );
 
+const Spinner = () => <span className="wsb-history__spinner" aria-hidden="true" />;
+
 function SkeletonRow() {
   return (
     <tr className="wsb-history__skeleton-row" aria-hidden="true">
@@ -123,12 +163,17 @@ export function WsbHistoryPage() {
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [status, setStatus] = useState('loading');
+  const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
+  const [appliedFilters, setAppliedFilters] = useState({ ...EMPTY_FILTERS });
 
-  const fetchItems = useCallback(async (pageOffset) => {
+  const activeCount = countActiveFilters(appliedFilters);
+  const isLoading = status === 'loading';
+
+  const fetchItems = useCallback(async (pageOffset, currentFilters) => {
     setStatus('loading');
     try {
       const { items: raw, total: count } = await fetchTablePage('sc_req_item', {
-        sysparm_query: 'opened_by=javascript:gs.getUserID()^stateIN3,4,6',
+        sysparm_query: buildQuery(currentFilters),
         sysparm_fields: 'sys_id,number,short_description,state,opened_at,closed_at,cat_item',
         sysparm_orderby: 'opened_at',
         sysparm_order: 'DESC',
@@ -143,7 +188,23 @@ export function WsbHistoryPage() {
     }
   }, []);
 
-  useEffect(() => { fetchItems(offset); }, [fetchItems, offset]);
+  useEffect(() => { fetchItems(offset, appliedFilters); }, [fetchItems, offset, appliedFilters]);
+
+  const handleApply = () => {
+    setAppliedFilters({ ...filters });
+    setOffset(0);
+  };
+
+  const handleReset = () => {
+    const empty = { ...EMPTY_FILTERS };
+    setFilters(empty);
+    setAppliedFilters(empty);
+    setOffset(0);
+  };
+
+  const updateFilter = (key, value) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;
@@ -155,19 +216,85 @@ export function WsbHistoryPage() {
     <div className="wsb-history">
       <div className="wsb-history__header">
         <span className="wsb-history__badge">HISTORIQUE</span>
-        <h1 className="wsb-history__title">Historique de mes réservations</h1>
+        <h1 className="wsb-history__title">Historique des réservations</h1>
         <p className="wsb-history__subtitle">Retrouvez l'ensemble de vos réservations passées et annulées.</p>
       </div>
 
       <div className="wsb-history__filters" role="search" aria-label="Filtrer l'historique">
         <span className="wsb-history__filter-label">Filtrer par :</span>
-        <select className="wsb-history__filter-select" aria-label="Statut"><option>Statut</option><option>Terminée</option><option>Annulée</option></select>
-        <select className="wsb-history__filter-select" aria-label="Type"><option>Type</option><option>Open Space</option><option>Phonebox</option><option>Parking Él.</option></select>
-        <select className="wsb-history__filter-select" aria-label="Bâtiment"><option>Bâtiment</option><option>A</option><option>B</option></select>
-        <select className="wsb-history__filter-select" aria-label="Année"><option>Année</option><option>2026</option><option>2025</option></select>
+
+        <select
+          className="wsb-history__filter-select"
+          aria-label="Statut"
+          value={filters.status}
+          onChange={e => updateFilter('status', e.target.value)}
+        >
+          {STATUS_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+
+        <select
+          className="wsb-history__filter-select"
+          aria-label="Type d'espace"
+          value={filters.type}
+          onChange={e => updateFilter('type', e.target.value)}
+        >
+          {TYPE_OPTIONS.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+
+        <div className="wsb-history__filter-date-group">
+          <label className="wsb-history__filter-date-label" htmlFor="wsb-filter-from">Du</label>
+          <input
+            type="date"
+            id="wsb-filter-from"
+            className="wsb-history__filter-date"
+            value={filters.dateFrom}
+            onChange={e => updateFilter('dateFrom', e.target.value)}
+          />
+        </div>
+
+        <div className="wsb-history__filter-date-group">
+          <label className="wsb-history__filter-date-label" htmlFor="wsb-filter-to">Au</label>
+          <input
+            type="date"
+            id="wsb-filter-to"
+            className="wsb-history__filter-date"
+            value={filters.dateTo}
+            onChange={e => updateFilter('dateTo', e.target.value)}
+          />
+        </div>
+
+        <button
+          type="button"
+          className="wsb-history__filter-apply"
+          onClick={handleApply}
+          disabled={isLoading}
+        >
+          {isLoading && <Spinner />}
+          Appliquer
+        </button>
+
+        {activeCount > 0 && (
+          <span className="wsb-history__filter-active" role="status" aria-live="polite">
+            {activeCount} filtre(s) actif(s)
+          </span>
+        )}
+
+        {activeCount > 0 && (
+          <button
+            type="button"
+            className="wsb-history__filter-reset"
+            onClick={handleReset}
+          >
+            Réinitialiser
+          </button>
+        )}
       </div>
 
-      <section className="wsb-history__section" aria-live="polite" aria-busy={status === 'loading'}>
+      <section className="wsb-history__section" aria-live="polite" aria-busy={isLoading}>
         <div className="wsb-history__section-header">
           <h2 className="wsb-history__section-title">Historique complet</h2>
           {status === 'success' && <span className="wsb-history__count-badge">{total}</span>}
@@ -182,7 +309,7 @@ export function WsbHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {status === 'loading' && Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} />)}
+              {isLoading && Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} />)}
               {status === 'success' && groups.map((g) => (
                 <Fragment key={g.label}>
                   <tr className="wsb-history__month-row"><td colSpan={8}>{g.label}</td></tr>
@@ -196,11 +323,15 @@ export function WsbHistoryPage() {
         {status === 'error' && (
           <p className="wsb-history__message wsb-history__message--error" role="alert">
             Une erreur est survenue.{' '}
-            <button type="button" className="wsb-history__retry-btn" onClick={() => fetchItems(offset)}>Réessayer</button>
+            <button type="button" className="wsb-history__retry-btn" onClick={() => fetchItems(offset, appliedFilters)}>Réessayer</button>
           </p>
         )}
         {status === 'empty' && (
-          <p className="wsb-history__message" role="status">Aucune réservation dans votre historique.</p>
+          <p className="wsb-history__message" role="status">
+            {activeCount > 0
+              ? 'Aucune réservation ne correspond à ces critères.'
+              : 'Aucune réservation dans votre historique.'}
+          </p>
         )}
 
         {status === 'success' && (
