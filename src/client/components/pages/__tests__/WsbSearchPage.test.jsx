@@ -50,7 +50,7 @@ describe('WsbSearchPage — structure', () => {
   test('affiche les titres de section', () => {
     render(<WsbSearchPage />);
     expect(screen.getByText(/LOCALISATION/)).toBeInTheDocument();
-    expect(screen.getByText(/TYPE D'ESPACE/)).toBeInTheDocument();
+    expect(screen.getByText(/TYPE D/)).toBeInTheDocument();
     expect(screen.getByText(/PARKING/)).toBeInTheDocument();
   });
 
@@ -160,18 +160,12 @@ describe('WsbSearchPage — dropdown Type d\'espace', () => {
 describe('WsbSearchPage — validation et focus erreur', () => {
   test('affiche les erreurs et met aria-invalid sur submit vide', () => {
     render(<WsbSearchPage />);
-    // Clear date (set empty)
-    const dateInput = screen.getByLabelText(/^Date/);
-
-    // Submit sans remplir bâtiment, étage, type
     fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
 
-    // Errors should appear for building, floor, type
     expect(screen.getByText('Le bâtiment est requis.')).toBeInTheDocument();
     expect(screen.getByText('L\'étage est requis.')).toBeInTheDocument();
     expect(screen.getByText('Le type d\'espace est requis.')).toBeInTheDocument();
 
-    // aria-invalid on selects
     expect(document.getElementById('search-building')).toHaveAttribute('aria-invalid', 'true');
     expect(document.getElementById('search-floor')).toHaveAttribute('aria-invalid', 'true');
     expect(document.getElementById('search-space-type')).toHaveAttribute('aria-invalid', 'true');
@@ -189,8 +183,6 @@ describe('WsbSearchPage — validation et focus erreur', () => {
   test('focus is moved to first error field on submit', () => {
     render(<WsbSearchPage />);
     fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
-
-    // First error in FIELD_ORDER is building
     expect(document.activeElement).toBe(document.getElementById('search-building'));
   });
 
@@ -199,7 +191,6 @@ describe('WsbSearchPage — validation et focus erreur', () => {
     fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
     expect(screen.getByText('Le bâtiment est requis.')).toBeInTheDocument();
 
-    // Select a building
     fireEvent.click(document.getElementById('search-building'));
     fireEvent.click(screen.getByText('Bâtiment A'));
     expect(screen.queryByText('Le bâtiment est requis.')).not.toBeInTheDocument();
@@ -225,7 +216,6 @@ describe('WsbSearchPage — soumission réussie', () => {
   test('navigue vers results avec les params', () => {
     render(<WsbSearchPage />);
 
-    // Fill all fields
     fireEvent.click(document.getElementById('search-building'));
     fireEvent.click(screen.getByText('Bâtiment A'));
 
@@ -297,5 +287,103 @@ describe('WsbSearchPage — pré-remplissage depuis query params', () => {
       date: '2026-05-12',
       type: 'phonebox',
     }));
+  });
+});
+
+describe('WsbSearchPage — US-1.03 activation conditionnelle du CTA', () => {
+  test('état initial : bouton aria-disabled="true" (bâtiment, étage, type vides)', () => {
+    render(<WsbSearchPage />);
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('1 champ rempli (bâtiment) : bouton reste aria-disabled="true"', () => {
+    render(<WsbSearchPage />);
+    fireEvent.click(document.getElementById('search-building'));
+    fireEvent.click(screen.getByText('Bâtiment A'));
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('2 champs remplis (bâtiment + étage) : bouton reste aria-disabled="true"', () => {
+    render(<WsbSearchPage />);
+    fireEvent.click(document.getElementById('search-building'));
+    fireEvent.click(screen.getByText('Bâtiment A'));
+    fireEvent.click(document.getElementById('search-floor'));
+    fireEvent.click(screen.getByText('Niv. 3'));
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('4 champs remplis : bouton passe à aria-disabled="false"', () => {
+    render(<WsbSearchPage />);
+    fireEvent.click(document.getElementById('search-building'));
+    fireEvent.click(screen.getByText('Bâtiment A'));
+    fireEvent.click(document.getElementById('search-floor'));
+    fireEvent.click(screen.getByText('Niv. 3'));
+    fireEvent.click(document.getElementById('search-space-type'));
+    fireEvent.click(screen.getByText('Openspace classique'));
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).toHaveAttribute('aria-disabled', 'false');
+  });
+
+  test('tooltip "Complétez tous les champs" présent quand bouton désactivé', () => {
+    render(<WsbSearchPage />);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Complétez tous les champs');
+  });
+
+  test('bouton désactivé associe aria-describedby au tooltip', () => {
+    render(<WsbSearchPage />);
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).toHaveAttribute('aria-describedby');
+    const tooltipId = btn.getAttribute('aria-describedby');
+    const tooltip = document.getElementById(tooltipId);
+    expect(tooltip).toHaveTextContent('Complétez tous les champs');
+  });
+
+  test('tooltip retiré (aria-describedby absent) quand bouton actif', () => {
+    render(<WsbSearchPage />);
+    fireEvent.click(document.getElementById('search-building'));
+    fireEvent.click(screen.getByText('Bâtiment A'));
+    fireEvent.click(document.getElementById('search-floor'));
+    fireEvent.click(screen.getByText('Niv. 3'));
+    fireEvent.click(document.getElementById('search-space-type'));
+    fireEvent.click(screen.getByText('Openspace classique'));
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).not.toHaveAttribute('aria-describedby');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  test('pré-remplissage URL complet : bouton immédiatement actif', () => {
+    getCurrentParams.mockReturnValueOnce({
+      building: 'A',
+      floor: '3',
+      date: '2026-05-11',
+      type: 'openspace-classique',
+    });
+    render(<WsbSearchPage />);
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).toHaveAttribute('aria-disabled', 'false');
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  test('le select rempli porte la classe --filled', () => {
+    render(<WsbSearchPage />);
+    fireEvent.click(document.getElementById('search-building'));
+    fireEvent.click(screen.getByText('Bâtiment A'));
+    const trigger = document.getElementById('search-building');
+    expect(trigger.className).toContain('wsb-select__trigger--filled');
+  });
+
+  test('le select vide ne porte pas la classe --filled', () => {
+    render(<WsbSearchPage />);
+    const trigger = document.getElementById('search-building');
+    expect(trigger.className).not.toContain('wsb-select__trigger--filled');
+  });
+
+  test('le champ date pré-rempli porte la classe --filled', () => {
+    render(<WsbSearchPage />);
+    const dateInput = screen.getByLabelText(/^Date/);
+    expect(dateInput.className).toContain('wsb-search-page__date-input--filled');
   });
 });

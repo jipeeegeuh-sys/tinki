@@ -36,15 +36,22 @@
   background: var(--wsb-color-primary);
   color: #ffffff;
 }
-.wsb-btn--primary:hover:not([aria-disabled]) {
+.wsb-btn--primary:hover:not([aria-disabled="true"]) {
   background: var(--wsb-color-primary-hover);
 }
-.wsb-btn--primary:active:not([aria-disabled]) {
+.wsb-btn--primary:active:not([aria-disabled="true"]) {
   background: var(--wsb-color-primary-active);
 }
 .wsb-btn--primary:focus-visible {
   outline: 2px solid var(--wsb-color-primary);
   outline-offset: 2px;
+}
+
+/* ── Primaire désactivé — couleurs explicites #CCCCCC/#999999 ──────────── */
+.wsb-btn--primary[aria-disabled="true"] {
+  background: #cccccc;
+  color: #999999;
+  cursor: not-allowed;
 }
 
 /* ── Secondaire ────────────────────────────────────────────────────────── */
@@ -53,7 +60,7 @@
   color: var(--wsb-color-primary);
   border: 1.5px solid var(--wsb-color-primary);
 }
-.wsb-btn--secondary:hover:not([aria-disabled]) {
+.wsb-btn--secondary:hover:not([aria-disabled="true"]) {
   background: var(--wsb-color-primary-subtle);
 }
 .wsb-btn--secondary:focus-visible {
@@ -67,7 +74,7 @@
   color: var(--wsb-color-text-secondary);
   border: none;
 }
-.wsb-btn--ghost:hover:not([aria-disabled]) {
+.wsb-btn--ghost:hover:not([aria-disabled="true"]) {
   background: rgba(255, 255, 255, 0.06);
   color: var(--wsb-color-text-primary);
 }
@@ -81,10 +88,10 @@
   background: var(--wsb-color-danger);
   color: #ffffff;
 }
-.wsb-btn--destructive:hover:not([aria-disabled]) {
+.wsb-btn--destructive:hover:not([aria-disabled="true"]) {
   background: var(--wsb-color-danger-hover);
 }
-.wsb-btn--destructive:active:not([aria-disabled]) {
+.wsb-btn--destructive:active:not([aria-disabled="true"]) {
   background: var(--wsb-color-danger-active);
 }
 .wsb-btn--destructive:focus-visible {
@@ -100,7 +107,7 @@
   padding-left: 0;
   padding-right: 0;
 }
-.wsb-btn--link-primary:hover:not([aria-disabled]) {
+.wsb-btn--link-primary:hover:not([aria-disabled="true"]) {
   color: var(--wsb-color-primary-hover);
   text-decoration: underline;
 }
@@ -118,7 +125,7 @@
   padding-left: 0;
   padding-right: 0;
 }
-.wsb-btn--link-danger:hover:not([aria-disabled]) {
+.wsb-btn--link-danger:hover:not([aria-disabled="true"]) {
   color: var(--wsb-color-danger-hover);
   text-decoration: underline;
 }
@@ -128,8 +135,8 @@
   border-radius: var(--wsb-radius-sm);
 }
 
-/* ── État désactivé (aria-disabled) ───────────────────────────────────── */
-.wsb-btn[aria-disabled="true"] {
+/* ── État désactivé générique (hors primary) ───────────────────────────── */
+.wsb-btn:not(.wsb-btn--primary)[aria-disabled="true"] {
   opacity: 0.45;
   cursor: not-allowed;
 }

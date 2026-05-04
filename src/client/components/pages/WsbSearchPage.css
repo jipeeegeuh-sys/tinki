@@ -103,6 +103,11 @@
   border-color: rgba(255, 255, 255, 0.20);
 }
 
+/* Champ date rempli : bordure violette (la date est toujours pré-remplie) */
+.wsb-search-page__date-input--filled {
+  border-color: var(--wsb-color-primary);
+}
+
 /* ── Row layout ──────────────────────────────────────────────────────── */
 .wsb-search-page__row {
   display: grid;

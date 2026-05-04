@@ -30,13 +30,9 @@ function Spinner() {
 /**
  * WsbButton — composant bouton partagé de la Design System FlexDesk.
  *
- * Règle de hiérarchie : un seul bouton `variant="primary"` par zone
- * d'action (formulaire, section de page). Les autres actions utilisent
- * secondary, ghost ou destructive.
- *
  * @param {'primary'|'secondary'|'ghost'|'destructive'|'link-primary'|'link-danger'} variant
  * @param {'sm'|'md'|'lg'} size
- * @param {boolean} disabled  — aria-disabled, le bouton reste focusable pour le tooltip
+ * @param {boolean} disabled  — aria-disabled ; le bouton reste focusable pour le tooltip
  * @param {boolean} loading   — affiche le spinner, bloque les clics
  * @param {React.ReactNode} icon — icône rendue avant le texte (non affichée pendant loading)
  * @param {string} tooltip    — texte du tooltip affiché quand disabled=true
@@ -60,7 +56,10 @@ export function WsbButton({
   const isBlocked = disabled || loading;
 
   const handleClick = (evt) => {
-    if (isBlocked) return;
+    if (isBlocked) {
+      evt.preventDefault();
+      return;
+    }
     onClick?.(evt);
   };
 
@@ -87,7 +86,7 @@ export function WsbButton({
       <button
         type={type}
         className={btnCls}
-        aria-disabled={isBlocked ? true : undefined}
+        aria-disabled={isBlocked ? 'true' : 'false'}
         aria-busy={loading ? true : undefined}
         aria-describedby={disabled && tooltip ? tooltipId : undefined}
         onClick={handleClick}

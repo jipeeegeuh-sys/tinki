@@ -76,6 +76,8 @@ export function WsbSearchPage() {
   const [parkingType, setParkingType] = useState(urlParams.parking || '');
   const [errors, setErrors] = useState({});
 
+  const isFormComplete = Boolean(building && floor && date && spaceType);
+
   const fieldRefs = {
     building: useRef(null),
     floor: useRef(null),
@@ -134,6 +136,10 @@ export function WsbSearchPage() {
   };
 
   const dateAriaProps = buildAriaError('date', errors.date);
+  const dateInputCls = [
+    'wsb-search-page__date-input',
+    date ? 'wsb-search-page__date-input--filled' : '',
+  ].filter(Boolean).join(' ');
 
   return (
     <div className="wsb-search-page">
@@ -164,7 +170,7 @@ export function WsbSearchPage() {
               ref={fieldRefs.date}
               type="date"
               id="search-date"
-              className="wsb-search-page__date-input"
+              className={dateInputCls}
               value={date}
               min={getTomorrowISO()}
               onChange={handleDateChange}
@@ -178,7 +184,7 @@ export function WsbSearchPage() {
 
         <fieldset className="wsb-search-page__section">
           <legend className="wsb-search-page__section-title">
-            <SpaceIcon /> TYPE D'ESPACE
+            <SpaceIcon /> TYPE D&apos;ESPACE
           </legend>
           <WsbSelect
             ref={fieldRefs.type}
@@ -236,7 +242,13 @@ export function WsbSearchPage() {
         </fieldset>
 
         <div className="wsb-search-page__actions">
-          <WsbButton type="submit" variant="primary" size="md">
+          <WsbButton
+            type="submit"
+            variant="primary"
+            size="md"
+            disabled={!isFormComplete}
+            tooltip={!isFormComplete ? 'Complétez tous les champs' : ''}
+          >
             Lancer la recherche
           </WsbButton>
         </div>

@@ -83,6 +83,12 @@ export const WsbSelect = forwardRef(function WsbSelect({
     }
   }, [open, focusedIdx, options, select]);
 
+  const triggerCls = [
+    'wsb-select__trigger',
+    open ? 'wsb-select__trigger--open' : '',
+    selected ? 'wsb-select__trigger--filled' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div className="wsb-select" ref={containerRef}>
       {label && (
@@ -94,7 +100,7 @@ export const WsbSelect = forwardRef(function WsbSelect({
       <button
         ref={triggerRef}
         type="button"
-        className={`wsb-select__trigger${open ? ' wsb-select__trigger--open' : ''}`}
+        className={triggerCls}
         id={id}
         role="combobox"
         aria-haspopup="listbox"
