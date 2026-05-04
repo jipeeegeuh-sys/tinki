@@ -16,6 +16,6 @@
 
 .wsb-skip-link:focus {
   top: 0;
-  outline: 2px solid #ffffff;
+  outline: 2px solid var(--wsb-color-primary);
   outline-offset: 2px;
 }

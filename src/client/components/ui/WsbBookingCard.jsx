@@ -47,6 +47,7 @@ export function WsbBookingCard({
     <article
       className={`wsb-booking-card${isAvailable ? '' : ' wsb-booking-card--occupied'}`}
       aria-label={`${cfg.label} ${spaceId} — ${floor} — ${isAvailable ? 'Disponible' : 'Occupé'}`}
+      {...(!isAvailable && { 'aria-disabled': 'true' })}
     >
       <div className="wsb-booking-card__header">
         <span

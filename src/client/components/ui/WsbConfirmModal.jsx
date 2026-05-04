@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback, useId } from 'react';
 import { WsbButton } from './WsbButton.jsx';
 import './WsbConfirmModal.css';
 
-const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"]), [role="button"]:not([aria-disabled="true"])';
 
 const WarningIcon = () => (
   <svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true">

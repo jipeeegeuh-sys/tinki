@@ -124,6 +124,20 @@ describe('WsbBookingCard — occupé', () => {
       'Open Space OS-007 — RDC — Occupé'
     );
   });
+
+  it('porte aria-disabled="true"', () => {
+    const { container } = render(<WsbBookingCard {...occupiedProps} />);
+    expect(container.firstChild).toHaveAttribute('aria-disabled', 'true');
+  });
+});
+
+describe('WsbBookingCard — card disponible sans aria-disabled', () => {
+  it('ne porte PAS aria-disabled quand status=available', () => {
+    const { container } = render(
+      <WsbBookingCard spaceId="B-001" sysId="s1" floor="Étage 1" type="bureau" status="available" />
+    );
+    expect(container.firstChild).not.toHaveAttribute('aria-disabled');
+  });
 });
 
 // ── Electric parking ──────────────────────────────────────────────────────
