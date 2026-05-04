@@ -1,0 +1,113 @@
+/* ── Container ─────────────────────────────────────────────────────────── */
+.wsb-toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 380px;
+  width: calc(100vw - 40px);
+  pointer-events: none;
+}
+.wsb-toast-container > * {
+  pointer-events: auto;
+}
+
+/* ── Toast de base ─────────────────────────────────────────────────────── */
+.wsb-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(14, 14, 22, 0.97);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-left: 4px solid var(--wsb-toast-accent, #a100ff);
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  animation: wsb-toast-enter 0.25s ease both;
+  min-width: 0;
+}
+
+.wsb-toast--exit {
+  animation: wsb-toast-exit 0.3s ease forwards;
+}
+
+/* ── Couleurs par variante ─────────────────────────────────────────────── */
+.wsb-toast--success { --wsb-toast-accent: var(--wsb-color-success, #00c853); }
+.wsb-toast--error   { --wsb-toast-accent: var(--wsb-color-danger,  #e53935); }
+.wsb-toast--warning { --wsb-toast-accent: var(--wsb-color-warning, #ffa000); }
+.wsb-toast--info    { --wsb-toast-accent: var(--wsb-color-primary, #a100ff); }
+
+/* ── Icône ─────────────────────────────────────────────────────────────── */
+.wsb-toast__icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  margin-top: 1px;
+  color: var(--wsb-toast-accent);
+}
+
+/* ── Corps ─────────────────────────────────────────────────────────────── */
+.wsb-toast__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wsb-toast__type-label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wsb-toast-accent);
+  margin-bottom: 3px;
+  line-height: 1;
+}
+
+.wsb-toast__message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--wsb-color-text-primary, #ffffff);
+  word-break: break-word;
+}
+
+/* ── Bouton fermer ─────────────────────────────────────────────────────── */
+.wsb-toast__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--wsb-color-text-muted, rgba(255,255,255,0.45));
+  border-radius: 4px;
+  margin: -2px -4px 0 0;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+.wsb-toast__close:hover {
+  color: var(--wsb-color-text-primary, #fff);
+  background: rgba(255, 255, 255, 0.08);
+}
+.wsb-toast__close:focus-visible {
+  outline: 2px solid var(--wsb-color-primary, #a100ff);
+  outline-offset: 1px;
+}
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+@keyframes wsb-toast-enter {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+@keyframes wsb-toast-exit {
+  from { transform: translateX(0);   opacity: 1; }
+  to   { transform: translateX(55%); opacity: 0; }
+}
