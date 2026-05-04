@@ -1,0 +1,46 @@
+.wsb-reservations-page {
+  padding: var(--wsb-space-8);
+  max-width: 1100px;
+}
+
+.wsb-reservations-page__header {
+  margin-bottom: var(--wsb-space-8);
+}
+
+.wsb-reservations-page__badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--wsb-color-primary);
+  text-transform: uppercase;
+  margin-bottom: var(--wsb-space-2);
+}
+
+.wsb-reservations-page__title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--wsb-color-text-primary);
+  margin: 0 0 var(--wsb-space-3);
+  outline: none;
+}
+
+.wsb-reservations-page__subtitle {
+  font-size: 0.9375rem;
+  color: var(--wsb-color-text-secondary);
+  margin: 0;
+}
+
+.wsb-reservations-page__content {
+  background: var(--wsb-color-bg-card);
+  border: 1px solid var(--wsb-color-border);
+  border-radius: var(--wsb-radius-lg);
+  padding: var(--wsb-space-8);
+}
+
+.wsb-reservations-page__placeholder {
+  color: var(--wsb-color-text-muted);
+  font-size: 0.9375rem;
+  text-align: center;
+  padding: var(--wsb-space-8) 0;
+}

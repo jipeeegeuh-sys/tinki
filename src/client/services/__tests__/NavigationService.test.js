@@ -6,42 +6,71 @@ import {
   navigateTo,
   guardResultsPage,
   guardEditPage,
-  isKnownPage,
+  isKnownRoute,
   getSearchUrl,
-  PAGES,
+  resolveRoute,
+  ROUTE_MAP,
   RESULTS_REQUIRED_PARAMS,
 } from '../NavigationService.js';
 
-describe('PAGES — constantes', () => {
-  test('contient les 6 pages attendues', () => {
-    expect(Object.keys(PAGES)).toEqual(['search', 'results', 'confirm', 'reservations', 'history', 'edit']);
+describe('ROUTE_MAP — constantes', () => {
+  test('contient les 5 pages attendues', () => {
+    expect(Object.keys(ROUTE_MAP)).toEqual(
+      ['search', 'results', 'reservations', 'history', 'edit']
+    );
   });
 
-  test('chaque page est préfixée x_wsb_flexoffice_', () => {
-    Object.values(PAGES).forEach((v) => {
-      expect(v).toMatch(/^x_wsb_flexoffice_/);
+  test('search mappe vers une chaîne vide (route par défaut)', () => {
+    expect(ROUTE_MAP.search).toBe('');
+  });
+
+  test('les routes non-search sont des slugs non vides', () => {
+    const { search: _s, ...rest } = ROUTE_MAP;
+    Object.values(rest).forEach((v) => {
+      expect(typeof v).toBe('string');
+      expect(v.length).toBeGreaterThan(0);
     });
   });
 });
 
 describe('buildPageUrl', () => {
-  test('retourne page.do sans params', () => {
-    expect(buildPageUrl('search')).toBe('x_wsb_flexoffice_search.do');
+  test('retourne le SPA endpoint sans qs pour search', () => {
+    expect(buildPageUrl('search')).toBe('x_wsb_flex_main.do');
   });
 
-  test('ajoute les query params', () => {
-    const url = buildPageUrl('results', { type: 'bureau', date: '2026-05-01' });
-    expect(url).toBe('x_wsb_flexoffice_results.do?type=bureau&date=2026-05-01');
+  test('ajoute ?route=mes-reservations pour reservations', () => {
+    expect(buildPageUrl('reservations')).toBe(
+      'x_wsb_flex_main.do?route=mes-reservations'
+    );
+  });
+
+  test('ajoute ?route=historique pour history', () => {
+    expect(buildPageUrl('history')).toBe(
+      'x_wsb_flex_main.do?route=historique'
+    );
+  });
+
+  test('ajoute ?route=edition pour edit', () => {
+    expect(buildPageUrl('edit')).toBe(
+      'x_wsb_flex_main.do?route=edition'
+    );
+  });
+
+  test('ajoute les params supplémentaires après route', () => {
+    const url = buildPageUrl('results', { type: 'openspace', date: '2026-05-10' });
+    expect(url).toBe(
+      'x_wsb_flex_main.do?route=resultats&type=openspace&date=2026-05-10'
+    );
   });
 
   test('ignore les params null ou vides', () => {
     const url = buildPageUrl('results', { type: 'bureau', floor: null, zone: '' });
-    expect(url).toBe('x_wsb_flexoffice_results.do?type=bureau');
+    expect(url).toBe('x_wsb_flex_main.do?route=resultats&type=bureau');
   });
 
-  test('génère l\'URL de la page confirm avec space_id et params de recherche', () => {
-    const url = buildPageUrl('confirm', { space_id: '207-B', building: 'A', floor: '3', date: '2026-04-30', type: 'bureau' });
-    expect(url).toBe('x_wsb_flexoffice_confirm.do?space_id=207-B&building=A&floor=3&date=2026-04-30&type=bureau');
+  test('génère l\'URL edit avec sys_id', () => {
+    const url = buildPageUrl('edit', { sys_id: 'abc123' });
+    expect(url).toBe('x_wsb_flex_main.do?route=edition&sys_id=abc123');
   });
 
   test('lance une erreur pour une page inconnue', () => {
@@ -79,10 +108,10 @@ describe('getCurrentParams', () => {
 
   test('retourne les params de window.location.search', () => {
     Object.defineProperty(window, 'location', {
-      value: { ...original, search: '?type=bureau&date=2026-05-01' },
+      value: { ...original, search: '?route=mes-reservations&building=A' },
       writable: true,
     });
-    expect(getCurrentParams()).toEqual({ type: 'bureau', date: '2026-05-01' });
+    expect(getCurrentParams()).toEqual({ route: 'mes-reservations', building: 'A' });
   });
 
   test('retourne {} quand pas de query string', () => {
@@ -91,6 +120,35 @@ describe('getCurrentParams', () => {
       writable: true,
     });
     expect(getCurrentParams()).toEqual({});
+  });
+});
+
+describe('resolveRoute', () => {
+  test('retourne "search" pour une valeur vide', () => {
+    expect(resolveRoute('')).toBe('search');
+    expect(resolveRoute(undefined)).toBe('search');
+    expect(resolveRoute(null)).toBe('search');
+  });
+
+  test('retourne "reservations" pour "mes-reservations"', () => {
+    expect(resolveRoute('mes-reservations')).toBe('reservations');
+  });
+
+  test('retourne "results" pour "resultats"', () => {
+    expect(resolveRoute('resultats')).toBe('results');
+  });
+
+  test('retourne "history" pour "historique"', () => {
+    expect(resolveRoute('historique')).toBe('history');
+  });
+
+  test('retourne "edit" pour "edition"', () => {
+    expect(resolveRoute('edition')).toBe('edit');
+  });
+
+  test('retourne null pour une route inconnue', () => {
+    expect(resolveRoute('xyz-inconnu')).toBeNull();
+    expect(resolveRoute('foo')).toBeNull();
   });
 });
 
@@ -109,14 +167,23 @@ describe('navigateTo', () => {
     });
   });
 
-  test('redirige vers la bonne URL', () => {
+  test('redirige vers le SPA endpoint pour search', () => {
     navigateTo('search');
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_search.do');
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_main.do');
   });
 
-  test('redirige avec des params', () => {
+  test('redirige avec route et params', () => {
     navigateTo('results', { type: 'bureau', date: '2026-05-01' });
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_results.do?type=bureau&date=2026-05-01');
+    expect(hrefSetter).toHaveBeenCalledWith(
+      'x_wsb_flex_main.do?route=resultats&type=bureau&date=2026-05-01'
+    );
+  });
+
+  test('redirige vers mes-reservations', () => {
+    navigateTo('reservations');
+    expect(hrefSetter).toHaveBeenCalledWith(
+      'x_wsb_flex_main.do?route=mes-reservations'
+    );
   });
 });
 
@@ -140,7 +207,7 @@ describe('guardResultsPage', () => {
     const result = guardResultsPage();
     expect(result.valid).toBe(false);
     expect(result.missing).toContain('type');
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_search.do');
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_main.do');
   });
 
   test('redirige vers search si date manquante', () => {
@@ -172,11 +239,10 @@ describe('guardResultsPage', () => {
   });
 
   test('retourne valid=true si les 4 params requis sont présents', () => {
-    window.location.search = '?building=A&floor=3&date=2026-05-01&type=openspace-classique';
+    window.location.search = '?route=resultats&building=A&floor=3&date=2026-05-01&type=openspace';
     const result = guardResultsPage();
     expect(result.valid).toBe(true);
     expect(result.missing).toEqual([]);
-    expect(result.params).toEqual({ building: 'A', floor: '3', date: '2026-05-01', type: 'openspace-classique' });
     expect(hrefSetter).not.toHaveBeenCalled();
   });
 });
@@ -200,40 +266,41 @@ describe('guardEditPage', () => {
     window.location.search = '';
     const result = guardEditPage();
     expect(result.valid).toBe(false);
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_reservations.do');
+    expect(hrefSetter).toHaveBeenCalledWith(
+      'x_wsb_flex_main.do?route=mes-reservations'
+    );
   });
 
   test('retourne valid=true si sys_id présent', () => {
-    window.location.search = '?sys_id=abc123';
+    window.location.search = '?route=edition&sys_id=abc123';
     const result = guardEditPage();
     expect(result.valid).toBe(true);
-    expect(result.params).toEqual({ sys_id: 'abc123' });
+    expect(result.params.sys_id).toBe('abc123');
     expect(hrefSetter).not.toHaveBeenCalled();
   });
 });
 
-describe('isKnownPage', () => {
-  test('reconnaît les pages du scope avec .do', () => {
-    expect(isKnownPage('x_wsb_flexoffice_search.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flexoffice_results.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flexoffice_confirm.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flexoffice_reservations.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flexoffice_history.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flexoffice_edit.do')).toBe(true);
+describe('isKnownRoute', () => {
+  test('reconnaît les slugs valides', () => {
+    expect(isKnownRoute('mes-reservations')).toBe(true);
+    expect(isKnownRoute('resultats')).toBe(true);
+    expect(isKnownRoute('historique')).toBe(true);
+    expect(isKnownRoute('edition')).toBe(true);
   });
 
-  test('reconnaît les pages du scope sans .do', () => {
-    expect(isKnownPage('x_wsb_flexoffice_search')).toBe(true);
+  test('reconnaît la route search (chaîne vide ou absent)', () => {
+    expect(isKnownRoute('')).toBe(true);
+    expect(isKnownRoute(undefined)).toBe(true);
   });
 
-  test('rejette une page inconnue', () => {
-    expect(isKnownPage('x_wsb_flexoffice_unknown.do')).toBe(false);
-    expect(isKnownPage('other_page.do')).toBe(false);
+  test('rejette les slugs inconnus', () => {
+    expect(isKnownRoute('xyz-inconnu')).toBe(false);
+    expect(isKnownRoute('other_page')).toBe(false);
   });
 });
 
 describe('getSearchUrl', () => {
-  test('retourne l\'URL de la page search', () => {
-    expect(getSearchUrl()).toBe('x_wsb_flexoffice_search.do');
+  test('retourne le SPA endpoint sans route', () => {
+    expect(getSearchUrl()).toBe('x_wsb_flex_main.do');
   });
 });

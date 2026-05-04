@@ -125,3 +125,47 @@ textarea:focus-visible {
 [aria-invalid="true"]:focus-visible {
   outline-color: var(--wsb-color-danger);
 }
+
+/* ── Splash loader (auth check en cours) ──────────────────────────────── */
+.wsb-splash {
+  position: fixed;
+  inset: 0;
+  background: var(--wsb-color-bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.wsb-splash__spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--wsb-color-border);
+  border-top-color: var(--wsb-color-primary);
+  border-radius: 50%;
+  animation: wsb-spin 0.75s linear infinite;
+}
+
+@keyframes wsb-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Banner session expirée ───────────────────────────────────────────── */
+.wsb-session-banner {
+  position: fixed;
+  inset: 0;
+  background: var(--wsb-color-bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--wsb-space-3);
+  font-family: var(--wsb-font-family);
+  font-size: 1.125rem;
+  color: var(--wsb-color-text-primary);
+  z-index: 9999;
+}
+
+.wsb-session-banner__icon {
+  font-size: 1.5rem;
+  color: var(--wsb-color-warning);
+}

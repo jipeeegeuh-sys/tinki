@@ -18,24 +18,34 @@ describe('Wsb404Page', () => {
     });
   });
 
-  test('affiche le message "Page introuvable."', () => {
+  test('affiche le message "Page introuvable"', () => {
     render(<Wsb404Page />);
-    expect(screen.getByText('Page introuvable.')).toBeInTheDocument();
+    expect(screen.getByText('Page introuvable')).toBeInTheDocument();
   });
 
-  test('affiche le CTA "Retour à l\'accueil"', () => {
+  test('affiche le CTA "Retour au formulaire de recherche"', () => {
     render(<Wsb404Page />);
-    expect(screen.getByRole('button', { name: /Retour à l'accueil/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Retour au formulaire de recherche/ })
+    ).toBeInTheDocument();
   });
 
-  test('le CTA redirige vers la page search', () => {
+  test('le CTA redirige vers le SPA endpoint (search)', () => {
     render(<Wsb404Page />);
-    fireEvent.click(screen.getByRole('button', { name: /Retour à l'accueil/ }));
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_search.do');
+    fireEvent.click(
+      screen.getByRole('button', { name: /Retour au formulaire de recherche/ })
+    );
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_main.do');
   });
 
   test('porte role="alert" pour l\'accessibilité', () => {
     render(<Wsb404Page />);
     expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+
+  test('le titre h1 est focalisable avec tabIndex={-1}', () => {
+    render(<Wsb404Page />);
+    const heading = screen.getByRole('heading', { level: 1 });
+    expect(heading).toHaveAttribute('tabindex', '-1');
   });
 });

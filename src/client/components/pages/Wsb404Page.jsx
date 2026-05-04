@@ -15,12 +15,12 @@ export function Wsb404Page() {
           <path d="M24 24L40 40M40 24L24 40" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       </div>
-      <h1 className="wsb-404__title">Page introuvable.</h1>
+      <h1 className="wsb-404__title" tabIndex={-1}>Page introuvable</h1>
       <p className="wsb-404__desc">
         L'adresse demandée ne correspond à aucune page de l'application FlexDesk.
       </p>
       <WsbButton variant="primary" size="md" onClick={handleReturn}>
-        Retour à l'accueil
+        Retour au formulaire de recherche
       </WsbButton>
     </div>
   );
