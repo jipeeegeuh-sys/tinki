@@ -72,36 +72,60 @@ describe('WsbSpinner', () => {
   });
 });
 
+// ── Zero-results state ───────────────────────────────────────────────────
 describe('WsbEmptyState — zero-results', () => {
-  beforeEach(() => render(<WsbEmptyState variant="zero-results" />));
+  const searchUrl = 'x_wsb_flexoffice_search.do?building=A&floor=3&date=2026-04-30&type=bureau';
 
   it('has role="status"', () => {
+    render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('renders the title', () => {
+    render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
     expect(screen.getByText('Aucun espace disponible')).toBeInTheDocument();
   });
 
-  it('renders the description', () => {
-    expect(screen.getByText(/Aucun espace ne correspond/)).toBeInTheDocument();
+  it('renders the AC-compliant description', () => {
+    render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
+    expect(
+      screen.getByText('Aucun espace disponible pour ces critères. Essayez un autre créneau ou un autre étage.')
+    ).toBeInTheDocument();
   });
 
-  it('renders CTA as a link with the correct href', () => {
+  it('renders CTA "Modifier ma recherche" as a link with the searchUrl', () => {
+    render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
     const link = screen.getByRole('link', { name: 'Modifier ma recherche' });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', expect.stringContaining('/x_acf_wsb_search.do'));
+    expect(link).toHaveAttribute('href', searchUrl);
+  });
+
+  it('uses a calendar-barred illustration (SVG with crossed lines)', () => {
+    const { container } = render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
+    const svg = container.querySelector('.wsb-empty-state__icon svg');
+    expect(svg).toBeInTheDocument();
+    expect(svg.querySelector('rect')).toBeInTheDocument();
   });
 });
 
+// ── Server-error state ──────────────────────────────────────────────────
 describe('WsbEmptyState — server-error', () => {
+  const searchUrl = 'x_wsb_flexoffice_search.do?building=A&floor=3&date=2026-04-30&type=bureau';
+
   it('renders the title', () => {
-    render(<WsbEmptyState variant="server-error" onRetry={() => {}} />);
+    render(<WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />);
     expect(screen.getByText('Erreur de chargement')).toBeInTheDocument();
   });
 
-  it('renders CTA as a <button>, not a link', () => {
-    render(<WsbEmptyState variant="server-error" onRetry={() => {}} />);
+  it('renders the AC-compliant error description', () => {
+    render(<WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />);
+    expect(
+      screen.getByText('Une erreur est survenue lors du chargement des résultats. Veuillez réessayer.')
+    ).toBeInTheDocument();
+  });
+
+  it('renders the "Réessayer" CTA as a <button>', () => {
+    render(<WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />);
     const btn = screen.getByRole('button', { name: 'Réessayer' });
     expect(btn).toBeInTheDocument();
     expect(btn.tagName).toBe('BUTTON');
@@ -109,12 +133,32 @@ describe('WsbEmptyState — server-error', () => {
 
   it('calls onRetry when the CTA is clicked', () => {
     const onRetry = jest.fn();
-    render(<WsbEmptyState variant="server-error" onRetry={onRetry} />);
+    render(<WsbEmptyState variant="server-error" onRetry={onRetry} searchUrl={searchUrl} />);
     fireEvent.click(screen.getByRole('button', { name: 'Réessayer' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
+
+  it('renders the "Retour à la recherche" secondary link', () => {
+    render(<WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />);
+    const link = screen.getByRole('link', { name: 'Retour à la recherche' });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', searchUrl);
+  });
+
+  it('applies the server-error variant class', () => {
+    const { container } = render(
+      <WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />
+    );
+    expect(container.querySelector('.wsb-empty-state--server-error')).toBeInTheDocument();
+  });
+
+  it('does not render secondary link when searchUrl is absent', () => {
+    render(<WsbEmptyState variant="server-error" onRetry={() => {}} />);
+    expect(screen.queryByRole('link', { name: 'Retour à la recherche' })).not.toBeInTheDocument();
+  });
 });
 
+// ── Empty-reservations state ────────────────────────────────────────────
 describe('WsbEmptyState — empty-reservations', () => {
   beforeEach(() => render(<WsbEmptyState variant="empty-reservations" />));
 
@@ -122,13 +166,14 @@ describe('WsbEmptyState — empty-reservations', () => {
     expect(screen.getByText('Aucune réservation')).toBeInTheDocument();
   });
 
-  it('renders CTA as a link to /x_acf_wsb_search.do', () => {
+  it('renders CTA as a link to search page', () => {
     const link = screen.getByRole('link', { name: 'Réserver un espace' });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/x_acf_wsb_search.do');
+    expect(link).toHaveAttribute('href', 'x_wsb_flexoffice_search.do');
   });
 });
 
+// ── Unknown variant ─────────────────────────────────────────────────────
 describe('WsbEmptyState — unknown variant', () => {
   it('renders nothing for an unknown variant', () => {
     const { container } = render(<WsbEmptyState variant="unknown" />);

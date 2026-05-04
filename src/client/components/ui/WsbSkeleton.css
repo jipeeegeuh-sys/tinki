@@ -164,3 +164,28 @@
   background: rgba(255, 160, 0, 0.05);
   border-color: rgba(255, 160, 0, 0.2);
 }
+
+.wsb-empty-state--server-error .wsb-empty-state__description {
+  color: #CC0000;
+}
+
+.wsb-empty-state__link {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--wsb-color-text-secondary, rgba(255, 255, 255, 0.70));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 150ms ease;
+}
+
+.wsb-empty-state__link:hover {
+  color: var(--wsb-color-text-primary, #ffffff);
+}
+
+.wsb-empty-state__link:focus-visible {
+  outline: 2px solid var(--wsb-color-primary, #a100ff);
+  outline-offset: 3px;
+  border-radius: 2px;
+}

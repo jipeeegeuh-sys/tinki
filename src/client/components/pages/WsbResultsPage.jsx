@@ -152,11 +152,11 @@ export function WsbResultsPage() {
         {status === 'loading' && <WsbGridSkeleton count={6} />}
 
         {status === 'error' && (
-          <WsbEmptyState variant="server-error" onRetry={fetchSpaces} />
+          <WsbEmptyState variant="server-error" onRetry={fetchSpaces} searchUrl={searchUrl} />
         )}
 
         {status === 'success' && spaces.length === 0 && (
-          <WsbEmptyState variant="zero-results" />
+          <WsbEmptyState variant="zero-results" searchUrl={searchUrl} />
         )}
 
         {status === 'success' && spaces.length > 0 && (

@@ -57,11 +57,12 @@ export function WsbSpinner({ size = 'md', label = 'Chargement…', className = '
   );
 }
 
-const ZeroResultsIcon = () => (
+const CalendarBarredIcon = () => (
   <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-    <circle cx="22" cy="22" r="14" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.35" />
-    <path d="M32 32L44 44" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeOpacity="0.35" />
-    <path d="M17 17L27 27M27 17L17 27" stroke="var(--wsb-color-danger)" strokeWidth="2" strokeLinecap="round" />
+    <rect x="6" y="11" width="40" height="35" rx="5" stroke="currentColor" strokeWidth="2.5" strokeOpacity="0.35" />
+    <path d="M6 22H46" stroke="currentColor" strokeWidth="2" strokeOpacity="0.35" />
+    <path d="M17 5V17M35 5V17" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeOpacity="0.35" />
+    <path d="M16 28L36 42M36 28L16 42" stroke="var(--wsb-color-danger)" strokeWidth="2.2" strokeLinecap="round" />
   </svg>
 );
 
@@ -90,33 +91,33 @@ const EmptyReservationsIcon = () => (
 
 const CONFIGS = {
   'zero-results': {
-    Icon: ZeroResultsIcon,
+    Icon: CalendarBarredIcon,
     title: 'Aucun espace disponible',
-    description: 'Aucun espace ne correspond à vos critères. Modifiez vos filtres pour élargir la recherche.',
+    description: 'Aucun espace disponible pour ces critères. Essayez un autre créneau ou un autre étage.',
     ctaLabel: 'Modifier ma recherche',
-    ctaHref: '/x_acf_wsb_search.do?building=A&floor=3&date=2026-04-30&type=openspace-classique',
   },
   'server-error': {
     Icon: ServerErrorIcon,
     title: 'Erreur de chargement',
-    description: 'Impossible de charger les données. Vérifiez votre connexion et réessayez.',
+    description: 'Une erreur est survenue lors du chargement des résultats. Veuillez réessayer.',
     ctaLabel: 'Réessayer',
-    ctaHref: null,
+    secondaryLabel: 'Retour à la recherche',
   },
   'empty-reservations': {
     Icon: EmptyReservationsIcon,
     title: 'Aucune réservation',
     description: "Vous n'avez pas encore de réservation. Réservez un espace de travail dès maintenant.",
     ctaLabel: 'Réserver un espace',
-    ctaHref: '/x_acf_wsb_search.do',
+    ctaHref: 'x_wsb_flexoffice_search.do',
   },
 };
 
-export function WsbEmptyState({ variant, onRetry }) {
+export function WsbEmptyState({ variant, onRetry, searchUrl }) {
   const config = CONFIGS[variant];
   if (!config) return null;
-  const { Icon, title, description, ctaLabel, ctaHref } = config;
+  const { Icon, title, description, ctaLabel, ctaHref, secondaryLabel } = config;
   const isServerError = variant === 'server-error';
+  const resolvedHref = searchUrl || ctaHref || '#';
 
   return (
     <div className={`wsb-empty-state wsb-empty-state--${variant}`} role="status">
@@ -127,11 +128,18 @@ export function WsbEmptyState({ variant, onRetry }) {
       <p className="wsb-empty-state__description">{description}</p>
       <div className="wsb-empty-state__actions">
         {isServerError ? (
-          <button type="button" className="wsb-empty-state__cta" onClick={onRetry}>
-            {ctaLabel}
-          </button>
+          <>
+            <button type="button" className="wsb-empty-state__cta" onClick={onRetry}>
+              {ctaLabel}
+            </button>
+            {searchUrl && (
+              <a href={searchUrl} className="wsb-empty-state__link">
+                {secondaryLabel}
+              </a>
+            )}
+          </>
         ) : (
-          <a href={ctaHref} className="wsb-empty-state__cta">
+          <a href={resolvedHref} className="wsb-empty-state__cta">
             {ctaLabel}
           </a>
         )}

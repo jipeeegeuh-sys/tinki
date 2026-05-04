@@ -45,6 +45,12 @@ const MOCK_SPACES = [
   { sys_id: 'sp3', name: 'A-103', floor: '3', floor_label: 'Niv. 3', type: 'bureau', status: 'occupied' },
 ];
 
+const ALL_OCCUPIED_SPACES = [
+  { sys_id: 'sp1', name: 'A-101', floor: '3', floor_label: 'Niv. 3', type: 'bureau', status: 'occupied' },
+  { sys_id: 'sp2', name: 'A-102', floor: '3', floor_label: 'Niv. 3', type: 'bureau', status: 'occupied' },
+  { sys_id: 'sp3', name: 'A-103', floor: '3', floor_label: 'Niv. 3', type: 'bureau', status: 'occupied' },
+];
+
 beforeEach(() => {
   guardResultsPage.mockReturnValue({
     valid: true,
@@ -201,6 +207,92 @@ describe('WsbResultsPage — critères de recherche', () => {
   });
 });
 
+// ── État vide (aucun résultat) ───────────────────────────────────────────
+describe('WsbResultsPage — zéro résultat', () => {
+  test('affiche l\'état vide quand l\'API retourne un tableau vide', async () => {
+    getAvailableSpaces.mockResolvedValue([]);
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Aucun espace disponible')).toBeInTheDocument();
+    });
+  });
+
+  test('affiche le message AC exact dans l\'état vide', async () => {
+    getAvailableSpaces.mockResolvedValue([]);
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Aucun espace disponible pour ces critères. Essayez un autre créneau ou un autre étage.')
+      ).toBeInTheDocument();
+    });
+  });
+
+  test('les skeletons disparaissent quand l\'état vide s\'affiche', async () => {
+    getAvailableSpaces.mockResolvedValue([]);
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Chargement des espaces disponibles')).not.toBeInTheDocument();
+    });
+  });
+
+  test('le CTA "Modifier ma recherche" renvoie vers la page search avec les params', async () => {
+    getAvailableSpaces.mockResolvedValue([]);
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      const link = screen.getByRole('link', { name: 'Modifier ma recherche' });
+      expect(link).toBeInTheDocument();
+      const href = link.getAttribute('href');
+      expect(href).toContain('x_wsb_flexoffice_search.do');
+      expect(href).toContain('building=A');
+      expect(href).toContain('floor=3');
+      expect(href).toContain('date=2026-04-30');
+      expect(href).toContain('type=bureau');
+    });
+  });
+});
+
+// ── État tout occupé ─────────────────────────────────────────────────────
+describe('WsbResultsPage — tout occupé (pas d\'état vide)', () => {
+  test('affiche les cards occupées sans déclencher l\'état vide', async () => {
+    getAvailableSpaces.mockResolvedValue(ALL_OCCUPIED_SPACES);
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('A-101')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('A-102')).toBeInTheDocument();
+    expect(screen.getByText('A-103')).toBeInTheDocument();
+    expect(screen.queryByText('Aucun espace disponible')).not.toBeInTheDocument();
+  });
+
+  test('affiche "0 places disponibles" dans le titre quand tous sont occupés', async () => {
+    getAvailableSpaces.mockResolvedValue(ALL_OCCUPIED_SPACES);
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('0 places disponibles')).toBeInTheDocument();
+    });
+  });
+
+  test('toutes les cards portent la classe --occupied', async () => {
+    getAvailableSpaces.mockResolvedValue(ALL_OCCUPIED_SPACES);
+    const { container } = render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(screen.getByText('A-101')).toBeInTheDocument();
+    });
+
+    const occupiedCards = container.querySelectorAll('.wsb-booking-card--occupied');
+    expect(occupiedCards).toHaveLength(3);
+  });
+});
+
+// ── État erreur serveur ──────────────────────────────────────────────────
 describe('WsbResultsPage — timeout et erreurs', () => {
   test('affiche l\'état erreur serveur après un timeout', async () => {
     getAvailableSpaces.mockRejectedValue(new ApiError('timeout', 'AbortController'));
@@ -216,12 +308,32 @@ describe('WsbResultsPage — timeout et erreurs', () => {
     consoleSpy.mockRestore();
   });
 
+  test('affiche le message d\'erreur AC exact', async () => {
+    getAvailableSpaces.mockRejectedValue(new ApiError(500, 'Internal Server Error'));
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Une erreur est survenue lors du chargement des résultats. Veuillez réessayer.')
+      ).toBeInTheDocument();
+    });
+  });
+
   test('affiche l\'état erreur pour une erreur HTTP 500', async () => {
     getAvailableSpaces.mockRejectedValue(new ApiError(500, 'Internal Server Error'));
     render(<WsbResultsPage />);
 
     await waitFor(() => {
       expect(screen.getByText('Erreur de chargement')).toBeInTheDocument();
+    });
+  });
+
+  test('les skeletons disparaissent quand l\'erreur s\'affiche', async () => {
+    getAvailableSpaces.mockRejectedValue(new ApiError(500, 'Internal Server Error'));
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      expect(screen.queryByLabelText('Chargement des espaces disponibles')).not.toBeInTheDocument();
     });
   });
 
@@ -259,6 +371,22 @@ describe('WsbResultsPage — timeout et erreurs', () => {
     expect(getAvailableSpaces).toHaveBeenCalledTimes(2);
     consoleSpy.mockRestore();
   });
+
+  test('le lien "Retour à la recherche" renvoie vers la page search avec les params', async () => {
+    getAvailableSpaces.mockRejectedValue(new ApiError(500, 'Internal Server Error'));
+    render(<WsbResultsPage />);
+
+    await waitFor(() => {
+      const link = screen.getByRole('link', { name: 'Retour à la recherche' });
+      expect(link).toBeInTheDocument();
+      const href = link.getAttribute('href');
+      expect(href).toContain('x_wsb_flexoffice_search.do');
+      expect(href).toContain('building=A');
+      expect(href).toContain('floor=3');
+      expect(href).toContain('date=2026-04-30');
+      expect(href).toContain('type=bureau');
+    });
+  });
 });
 
 describe('WsbResultsPage — guard invalide', () => {
@@ -272,16 +400,5 @@ describe('WsbResultsPage — guard invalide', () => {
     guardResultsPage.mockReturnValue({ valid: false, missing: ['type'], params: {} });
     render(<WsbResultsPage />);
     expect(getAvailableSpaces).not.toHaveBeenCalled();
-  });
-});
-
-describe('WsbResultsPage — zéro résultat', () => {
-  test('affiche l\'état vide quand l\'API retourne un tableau vide', async () => {
-    getAvailableSpaces.mockResolvedValue([]);
-    render(<WsbResultsPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Aucun espace disponible')).toBeInTheDocument();
-    });
   });
 });
