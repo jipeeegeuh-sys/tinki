@@ -10,6 +10,11 @@ jest.mock('../../../services/NavigationService.js', () => ({
   navigateTo: jest.fn(),
 }));
 
+const mockToast = { success: jest.fn(), error: jest.fn(), warning: jest.fn(), info: jest.fn() };
+jest.mock('../../../lib/useToast.js', () => ({
+  useToast: () => ({ toast: mockToast }),
+}));
+
 const mockDefaultRecord = {
   sys_id: 'abc123',
   number: 'RITM0010042',
@@ -26,9 +31,12 @@ const mockDefaultRecord = {
 
 jest.mock('../../../services/ApiService.js', () => ({
   getRecord: jest.fn(() => Promise.resolve({ ...mockDefaultRecord })),
+  updateRecord: jest.fn(() => Promise.resolve({})),
+  fetchTablePage: jest.fn(() => Promise.resolve({ items: [], total: 0 })),
 }));
 
-const { getRecord } = require('../../../services/ApiService.js');
+const { getRecord, updateRecord, fetchTablePage } = require('../../../services/ApiService.js');
+const { navigateTo } = require('../../../services/NavigationService.js');
 
 import { WsbEditPage } from '../WsbEditPage';
 
@@ -250,5 +258,180 @@ describe('WsbEditPage — US-5.03 parking modes', () => {
     await screen.findByRole('radio', { name: 'Thermique' });
     expect(screen.queryByText(/8 places électriques/)).not.toBeInTheDocument();
     expect(screen.queryByText(/ne comprendra aucune/)).not.toBeInTheDocument();
+  });
+});
+
+describe('WsbEditPage — US-5.04 save submission', () => {
+  beforeEach(() => {
+    getRecord.mockResolvedValue({ ...mockDefaultRecord });
+    updateRecord.mockClear();
+    updateRecord.mockResolvedValue({});
+    fetchTablePage.mockClear();
+    fetchTablePage.mockResolvedValue({ items: [], total: 0 });
+    mockToast.success.mockClear();
+    mockToast.error.mockClear();
+    navigateTo.mockClear();
+  });
+
+  test('save button enters loading state on click', async () => {
+    let resolveUpdate;
+    updateRecord.mockImplementation(
+      () => new Promise((r) => { resolveUpdate = r; }),
+    );
+
+    render(<WsbEditPage />);
+    await screen.findByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+
+    const saveBtn = screen.getByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+    fireEvent.click(saveBtn);
+
+    const loadingBtn = await screen.findByRole('button', {
+      name: 'Enregistrement en cours…',
+    });
+    expect(loadingBtn).toHaveAttribute('aria-busy', 'true');
+    expect(loadingBtn).toHaveAttribute('aria-disabled', 'true');
+
+    resolveUpdate({});
+  });
+
+  test('successful save with schedule change checks availability then PATCHes', async () => {
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    const dateInput = screen.getByLabelText('Date');
+    fireEvent.change(dateInput, { target: { value: '2026-05-13' } });
+
+    const saveBtn = screen.getByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(fetchTablePage).toHaveBeenCalledWith(
+        'sc_req_item',
+        expect.objectContaining({ sysparm_limit: '1' }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(updateRecord).toHaveBeenCalledWith(
+        'sc_req_item',
+        'abc123',
+        expect.objectContaining({
+          u_booking_date: '2026-05-13',
+          u_arrival_time: '08:30',
+          u_departure_time: '18:00',
+          u_parking_space: 'none',
+        }),
+      );
+    });
+
+    expect(mockToast.success).toHaveBeenCalledWith(
+      'Votre réservation a bien été modifiée.',
+    );
+    expect(navigateTo).toHaveBeenCalledWith('reservations');
+  });
+
+  test('availability conflict shows error and blocks save', async () => {
+    fetchTablePage.mockResolvedValue({ items: [{ sys_id: 'conflict' }], total: 1 });
+
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    const dateInput = screen.getByLabelText('Date');
+    fireEvent.change(dateInput, { target: { value: '2026-05-13' } });
+
+    const saveBtn = screen.getByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(mockToast.error).toHaveBeenCalledWith(
+        'Ce créneau est déjà réservé. Veuillez choisir un autre horaire.',
+      );
+    });
+
+    expect(updateRecord).not.toHaveBeenCalled();
+    expect(navigateTo).not.toHaveBeenCalled();
+  });
+
+  test('parking-only change skips availability check', async () => {
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    const thermiqueRadio = screen.getByRole('radio', { name: 'Thermique' });
+    fireEvent.click(thermiqueRadio);
+
+    const saveBtn = screen.getByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(updateRecord).toHaveBeenCalledWith(
+        'sc_req_item',
+        'abc123',
+        expect.objectContaining({ u_parking_space: 'thermique' }),
+      );
+    });
+
+    expect(fetchTablePage).not.toHaveBeenCalled();
+    expect(mockToast.success).toHaveBeenCalled();
+    expect(navigateTo).toHaveBeenCalledWith('reservations');
+  });
+
+  test('API error during save shows error toast', async () => {
+    updateRecord.mockRejectedValue(new Error('Network error'));
+
+    render(<WsbEditPage />);
+    const saveBtn = await screen.findByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(mockToast.error).toHaveBeenCalledWith(
+        'Une erreur est survenue. Veuillez réessayer.',
+      );
+    });
+
+    expect(navigateTo).not.toHaveBeenCalled();
+  });
+
+  test('PATCH body includes updated short_description JSON', async () => {
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    const dateInput = screen.getByLabelText('Date');
+    const arrivalInput = screen.getByLabelText("Heure d'arrivée");
+    fireEvent.change(dateInput, { target: { value: '2026-05-14' } });
+    fireEvent.change(arrivalInput, { target: { value: '09:00' } });
+
+    const saveBtn = screen.getByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(updateRecord).toHaveBeenCalled();
+    });
+
+    const body = updateRecord.mock.calls[0][2];
+    const desc = JSON.parse(body.short_description);
+    expect(desc).toEqual(
+      expect.objectContaining({
+        spaceId: 'A-102',
+        type: 'bureau',
+        floor: '3',
+        date: '2026-05-14',
+        start: '09:00',
+        end: '18:00',
+      }),
+    );
   });
 });

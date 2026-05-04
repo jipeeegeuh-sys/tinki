@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { getRecord } from '../../services/ApiService.js';
+import { getRecord, updateRecord, fetchTablePage } from '../../services/ApiService.js';
 import { guardEditPage, navigateTo } from '../../services/NavigationService.js';
 import { getTomorrowISO, isWeekend } from '../../lib/dateUtils.js';
 import { buildAriaError, FormError } from '../../lib/useFocusError.js';
+import { useToast } from '../../lib/useToast.js';
 import { WsbButton } from '../ui/WsbButton.jsx';
 import './WsbEditPage.css';
 
@@ -155,6 +156,8 @@ export function WsbEditPage() {
   const [arrival, setArrival] = useState('');
   const [depart,  setDepart]  = useState('');
   const [parking, setParking] = useState('none');
+  const [saving,  setSaving]  = useState(false);
+  const { toast } = useToast();
   const minDate = useMemo(() => getTomorrowISO(), []);
   const errors  = useMemo(() => validateSchedule(date, arrival, depart), [date, arrival, depart]);
   const allFieldsFilled = date && arrival && depart;
@@ -178,6 +181,51 @@ export function WsbEditPage() {
   }, [guard]);
 
   useEffect(() => { load(); }, [load]);
+
+  const handleSave = useCallback(async () => {
+    if (!canSave || saving) return;
+    setSaving(true);
+    try {
+      const scheduleChanged =
+        date !== booking.date ||
+        arrival !== booking.arrivalTime ||
+        depart !== booking.departureTime;
+
+      if (scheduleChanged) {
+        const { total } = await fetchTablePage('sc_req_item', {
+          sysparm_query: `u_space_id=${booking.spaceId}^u_booking_date=${date}^u_arrival_time<${depart}^u_departure_time>${arrival}^sys_id!=${booking.sysId}`,
+          sysparm_limit: '1',
+          sysparm_fields: 'sys_id',
+        });
+        if (total > 0) {
+          toast.error('Ce créneau est déjà réservé. Veuillez choisir un autre horaire.');
+          setSaving(false);
+          return;
+        }
+      }
+
+      await updateRecord('sc_req_item', booking.sysId, {
+        short_description: JSON.stringify({
+          spaceId: booking.spaceId,
+          type: booking.type,
+          floor: booking.floor,
+          date,
+          start: arrival,
+          end: depart,
+        }),
+        u_booking_date: date,
+        u_arrival_time: arrival,
+        u_departure_time: depart,
+        u_parking_space: parking,
+      });
+
+      toast.success('Votre réservation a bien été modifiée.');
+      navigateTo('reservations');
+    } catch {
+      toast.error('Une erreur est survenue. Veuillez réessayer.');
+      setSaving(false);
+    }
+  }, [canSave, saving, date, arrival, depart, parking, booking, toast]);
 
   if (!guard.valid)         return null;
   if (status === 'loading') return <SkeletonEditForm />;
@@ -297,8 +345,8 @@ export function WsbEditPage() {
 
         {/* ── Actions ──────────────────────────────────────────────────── */}
         <div className="wsb-edit__actions">
-          <WsbButton variant="primary" disabled={!canSave}>
-            Enregistrer les modifications
+          <WsbButton variant="primary" disabled={!canSave} loading={saving} onClick={handleSave}>
+            {saving ? 'Enregistrement en cours…' : 'Enregistrer les modifications'}
           </WsbButton>
           <WsbButton variant="secondary" onClick={() => navigateTo('reservations')}>
             Annuler
