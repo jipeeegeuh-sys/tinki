@@ -148,6 +148,12 @@ describe('WsbConfirmModal — état loading', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Retour' }));
     expect(props.onClose).not.toHaveBeenCalled();
   });
+
+  test('ne ferme pas pendant le loading (clic ✕)', () => {
+    const { props } = renderModal({ loading: true });
+    fireEvent.click(screen.getByLabelText('Fermer la modal'));
+    expect(props.onClose).not.toHaveBeenCalled();
+  });
 });
 
 describe('WsbConfirmModal — focus management', () => {
