@@ -121,7 +121,10 @@
 }
 
 .wsb-results-page__criteria-pill {
-  display: inline-block;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--wsb-space-2);
   padding: 0.25rem 0.6rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -129,6 +132,15 @@
   background: var(--wsb-color-bg-elevated);
   border: 1px solid var(--wsb-color-border);
   border-radius: var(--wsb-radius-sm);
+}
+
+.wsb-results-page__criteria-pill + .wsb-results-page__criteria-pill::before {
+  content: '·';
+  position: absolute;
+  left: calc(-0.5 * var(--wsb-space-2) - 3px);
+  color: var(--wsb-color-text-muted);
+  font-weight: 700;
+  pointer-events: none;
 }
 
 .wsb-results-page__modify-btn {

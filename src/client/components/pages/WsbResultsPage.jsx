@@ -19,10 +19,10 @@ const TYPE_LABELS = {
 };
 
 const FLOOR_LABELS = {
-  '2': 'Niv. 2',
-  '3': 'Niv. 3',
-  '4': 'Niv. 4',
-  '5': 'Niv. 5',
+  '2': 'Niveau 2',
+  '3': 'Niveau 3',
+  '4': 'Niveau 4',
+  '5': 'Niveau 5',
 };
 
 function formatDateDisplay(dateStr) {
@@ -143,7 +143,7 @@ export function WsbResultsPage() {
             </span>
           </div>
           <a href={searchUrl} className="wsb-results-page__modify-btn">
-            <EditIcon /> Modifier
+            <EditIcon /> Modifier la recherche
           </a>
         </div>
       </div>

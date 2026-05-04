@@ -125,10 +125,18 @@ describe('WsbResultsPage — succès API', () => {
 });
 
 describe('WsbResultsPage — critères de recherche', () => {
-  test('affiche les critères de recherche dans la barre', () => {
+  test('affiche les quatre critères dans la barre', () => {
     render(<WsbResultsPage />);
     expect(screen.getByText(/Bâtiment A/)).toBeInTheDocument();
-    expect(screen.getByText(/Niv\. 3/)).toBeInTheDocument();
+    expect(screen.getByText(/Niveau 3/)).toBeInTheDocument();
+    expect(screen.getByText(/30 avril 2026/)).toBeInTheDocument();
+    expect(screen.getByText(/Bureau/)).toBeInTheDocument();
+  });
+
+  test('formate la date ISO en français lisible', () => {
+    render(<WsbResultsPage />);
+    expect(screen.getByText(/30 avril 2026/)).toBeInTheDocument();
+    expect(screen.queryByText('2026-04-30')).not.toBeInTheDocument();
   });
 
   test('le lien "Nouvelle recherche" pointe vers la page search', () => {
@@ -140,13 +148,22 @@ describe('WsbResultsPage — critères de recherche', () => {
     );
   });
 
-  test('le lien "Modifier" pointe vers la page search', () => {
+  test('le lien "Modifier la recherche" pointe vers la page search avec les params', () => {
     render(<WsbResultsPage />);
-    const link = screen.getByText('Modifier');
-    expect(link.closest('a')).toHaveAttribute(
-      'href',
-      expect.stringContaining('x_wsb_flexoffice_search.do')
-    );
+    const link = screen.getByText('Modifier la recherche');
+    const href = link.closest('a').getAttribute('href');
+    expect(href).toContain('x_wsb_flexoffice_search.do');
+    expect(href).toContain('building=A');
+    expect(href).toContain('floor=3');
+    expect(href).toContain('date=2026-04-30');
+    expect(href).toContain('type=bureau');
+  });
+
+  test('le lien "Modifier la recherche" est accessible au clavier', () => {
+    render(<WsbResultsPage />);
+    const link = screen.getByText('Modifier la recherche').closest('a');
+    expect(link).toBeTruthy();
+    expect(link.tagName).toBe('A');
   });
 });
 
