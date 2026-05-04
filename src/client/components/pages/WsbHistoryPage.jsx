@@ -17,6 +17,16 @@ const TYPE_CFG = {
 };
 const DEFAULT_TYPE = { label: 'Espace', bg: 'rgba(255,255,255,0.08)', text: 'rgba(255,255,255,0.7)', border: 'rgba(255,255,255,0.15)' };
 
+const TYPE_SEARCH_MAP = {
+  'openspace-classique':  'open_space',
+  'openspace-specialise': 'open_space_specialise',
+  'bureau':               'bureau',
+  'phonebox':             'phonebox',
+  'meetingroom':          'meeting_room',
+  'parking-electrique':   'parking_electric',
+  'parking-thermique':    'parking_thermique',
+};
+
 const STATE_MAP = { 3: 'terminee', 4: 'terminee', 6: 'annulee' };
 const MONTH_ABBR = ['JANV', 'FÉVR', 'MARS', 'AVRI', 'MAI', 'JUIN', 'JUIL', 'AOÛT', 'SEPT', 'OCT', 'NOV', 'DÉC'];
 
@@ -83,6 +93,29 @@ function calcDuration(start, end) {
   return `${Math.floor(mins / 60)}h${String(mins % 60).padStart(2, '0')}`;
 }
 
+function extractBuilding(spaceId) {
+  if (!spaceId) return '';
+  const match = spaceId.match(/^([AB])-/i);
+  return match ? match[1].toUpperCase() : '';
+}
+
+function extractFloorNumber(floorStr) {
+  if (!floorStr || floorStr === '—') return '';
+  const match = floorStr.match(/(\d+)/);
+  return match ? match[1] : '';
+}
+
+function buildRebookParams(item) {
+  const params = {};
+  const searchType = TYPE_SEARCH_MAP[item.type];
+  if (searchType) params.type = searchType;
+  const building = extractBuilding(item.spaceId);
+  if (building) params.building = building;
+  const floor = extractFloorNumber(item.floor);
+  if (floor) params.floor = floor;
+  return params;
+}
+
 function parseItem(raw) {
   let extra = {};
   try { extra = JSON.parse(raw.short_description); } catch { /* text fallback */ }
@@ -125,14 +158,14 @@ const Spinner = () => <span className="wsb-history__spinner" aria-hidden="true" 
 function SkeletonRow() {
   return (
     <tr className="wsb-history__skeleton-row" aria-hidden="true">
-      {Array.from({ length: 8 }, (_, i) => (
+      {Array.from({ length: 9 }, (_, i) => (
         <td key={i}><span className="wsb-skeleton wsb-skeleton--line" style={{ width: `${50 + (i * 13) % 40}%` }} /></td>
       ))}
     </tr>
   );
 }
 
-function HistoryRow({ item }) {
+function HistoryRow({ item, onRebook }) {
   const cfg = TYPE_CFG[item.type] ?? DEFAULT_TYPE;
   const cls = STATE_MAP[item.state] ?? 'terminee';
   return (
@@ -155,6 +188,22 @@ function HistoryRow({ item }) {
       </td>
       <td className="wsb-history__cell--muted wsb-history__cell--cancelled">
         {item.closedAt ? formatDate(item.closedAt) : <span className="wsb-history__dash">—</span>}
+      </td>
+      <td>
+        <button
+          type="button"
+          className="wsb-history__rebook-btn"
+          onClick={() => onRebook(item)}
+          aria-label={`Re-réserver ${item.spaceId}`}
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+            <path d="M1.5 7.5a5.5 5.5 0 019.26-4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M12.5 6.5a5.5 5.5 0 01-9.26 4" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+            <path d="M10.5 1v2.5H13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M3.5 13v-2.5H1" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          Re-réserver
+        </button>
       </td>
     </tr>
   );
@@ -218,6 +267,10 @@ export function WsbHistoryPage() {
     setAppliedFilters(empty);
     setOffset(0);
   };
+
+  const handleRebook = useCallback((item) => {
+    navigateTo('search', buildRebookParams(item));
+  }, []);
 
   const updateFilter = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -354,14 +407,15 @@ export function WsbHistoryPage() {
                   <tr>
                     <th>N° PLACE</th><th>TYPE DE PLACE</th><th>ÉTAGE</th>
                     <th>DATE</th><th>HORAIRES</th><th>DURÉE</th><th>STATUT</th><th>ANNULÉE LE</th>
+                    <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   {isLoading && Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} />)}
                   {status === 'success' && groups.map((g) => (
                     <Fragment key={g.label}>
-                      <tr className="wsb-history__month-row"><td colSpan={8}>{g.label}</td></tr>
-                      {g.rows.map((item) => <HistoryRow key={item.sysId} item={item} />)}
+                      <tr className="wsb-history__month-row"><td colSpan={9}>{g.label}</td></tr>
+                      {g.rows.map((item) => <HistoryRow key={item.sysId} item={item} onRebook={handleRebook} />)}
                     </Fragment>
                   ))}
                 </tbody>

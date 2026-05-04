@@ -356,6 +356,35 @@
   background: var(--wsb-color-danger);
 }
 
+/* ── Re-book button ─────────────────────────────────────────────────────── */
+.wsb-history__rebook-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: 1px solid var(--wsb-color-border);
+  border-radius: var(--wsb-radius-md);
+  font-family: var(--wsb-font-family);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--wsb-color-text-secondary);
+  padding: 0.3rem 0.65rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.wsb-history__rebook-btn:hover {
+  color: var(--wsb-color-primary);
+  border-color: var(--wsb-color-primary);
+  background: rgba(161, 0, 255, 0.08);
+}
+
+.wsb-history__rebook-btn:focus-visible {
+  outline: 2px solid var(--wsb-color-primary);
+  outline-offset: 2px;
+}
+
 /* ── Skeleton rows ───────────────────────────────────────────────────────── */
 .wsb-history__skeleton-row td {
   padding: 0.875rem 1rem;
