@@ -367,29 +367,6 @@
   display: block;
 }
 
-/* ── Messages (error / empty) ────────────────────────────────────────────── */
-.wsb-history__message {
-  padding: var(--wsb-space-8) var(--wsb-space-5);
-  text-align: center;
-  color: var(--wsb-color-text-secondary);
-  font-size: 0.9rem;
-}
-
-.wsb-history__message--error {
-  color: var(--wsb-color-danger);
-}
-
-.wsb-history__retry-btn {
-  background: none;
-  border: none;
-  font-family: var(--wsb-font-family);
-  font-size: 0.9rem;
-  color: var(--wsb-color-primary);
-  cursor: pointer;
-  text-decoration: underline;
-  padding: 0;
-}
-
 /* ── Footer: counter + pagination ────────────────────────────────────────── */
 .wsb-history__footer {
   display: flex;

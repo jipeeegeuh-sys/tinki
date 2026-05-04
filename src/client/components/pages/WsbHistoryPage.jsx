@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import { fetchTablePage } from '../../services/ApiService.js';
+import { navigateTo } from '../../services/NavigationService.js';
+import { WsbEmptyState } from '../ui/WsbEmptyState.jsx';
 import './WsbHistoryPage.css';
 
 const PAGE_SIZE = 20;
@@ -158,19 +160,31 @@ function HistoryRow({ item }) {
   );
 }
 
+function getErrorMessage(code) {
+  if (code === 'timeout') return 'La connexion a expiré.';
+  if (code === 403) return 'Vous n’avez pas accès à cette page. Contactez votre administrateur.';
+  return 'Une erreur est survenue.';
+}
+
 export function WsbHistoryPage() {
   const [items, setItems] = useState([]);
   const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(0);
   const [status, setStatus] = useState('loading');
+  const [errorCode, setErrorCode] = useState(null);
   const [filters, setFilters] = useState({ ...EMPTY_FILTERS });
   const [appliedFilters, setAppliedFilters] = useState({ ...EMPTY_FILTERS });
 
   const activeCount = countActiveFilters(appliedFilters);
   const isLoading = status === 'loading';
+  const isEmptyNoFilters = status === 'empty' && activeCount === 0;
+  const isEmptyFiltered = status === 'empty' && activeCount > 0;
+  const isError = status === 'error';
+  const showContent = isLoading || status === 'success' || isEmptyFiltered;
 
   const fetchItems = useCallback(async (pageOffset, currentFilters) => {
     setStatus('loading');
+    setErrorCode(null);
     try {
       const { items: raw, total: count } = await fetchTablePage('sc_req_item', {
         sysparm_query: buildQuery(currentFilters),
@@ -183,7 +197,10 @@ export function WsbHistoryPage() {
       setItems(raw.map(parseItem));
       setTotal(count);
       setStatus(raw.length === 0 ? 'empty' : 'success');
-    } catch {
+    } catch (err) {
+      if (err?.status === 403) setErrorCode(403);
+      else if (err?.status === 'timeout') setErrorCode('timeout');
+      else setErrorCode(500);
       setStatus('error');
     }
   }, []);
@@ -220,148 +237,182 @@ export function WsbHistoryPage() {
         <p className="wsb-history__subtitle">Retrouvez l'ensemble de vos réservations passées et annulées.</p>
       </div>
 
-      <div className="wsb-history__filters" role="search" aria-label="Filtrer l'historique">
-        <span className="wsb-history__filter-label">Filtrer par :</span>
+      {showContent && (
+        <div className="wsb-history__filters" role="search" aria-label="Filtrer l'historique">
+          <span className="wsb-history__filter-label">Filtrer par :</span>
 
-        <select
-          className="wsb-history__filter-select"
-          aria-label="Statut"
-          value={filters.status}
-          onChange={e => updateFilter('status', e.target.value)}
-        >
-          {STATUS_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          <select
+            className="wsb-history__filter-select"
+            aria-label="Statut"
+            value={filters.status}
+            onChange={e => updateFilter('status', e.target.value)}
+          >
+            {STATUS_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
 
-        <select
-          className="wsb-history__filter-select"
-          aria-label="Type d'espace"
-          value={filters.type}
-          onChange={e => updateFilter('type', e.target.value)}
-        >
-          {TYPE_OPTIONS.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          <select
+            className="wsb-history__filter-select"
+            aria-label="Type d'espace"
+            value={filters.type}
+            onChange={e => updateFilter('type', e.target.value)}
+          >
+            {TYPE_OPTIONS.map(o => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
 
-        <div className="wsb-history__filter-date-group">
-          <label className="wsb-history__filter-date-label" htmlFor="wsb-filter-from">Du</label>
-          <input
-            type="date"
-            id="wsb-filter-from"
-            className="wsb-history__filter-date"
-            value={filters.dateFrom}
-            onChange={e => updateFilter('dateFrom', e.target.value)}
-          />
-        </div>
+          <div className="wsb-history__filter-date-group">
+            <label className="wsb-history__filter-date-label" htmlFor="wsb-filter-from">Du</label>
+            <input
+              type="date"
+              id="wsb-filter-from"
+              className="wsb-history__filter-date"
+              value={filters.dateFrom}
+              onChange={e => updateFilter('dateFrom', e.target.value)}
+            />
+          </div>
 
-        <div className="wsb-history__filter-date-group">
-          <label className="wsb-history__filter-date-label" htmlFor="wsb-filter-to">Au</label>
-          <input
-            type="date"
-            id="wsb-filter-to"
-            className="wsb-history__filter-date"
-            value={filters.dateTo}
-            onChange={e => updateFilter('dateTo', e.target.value)}
-          />
-        </div>
+          <div className="wsb-history__filter-date-group">
+            <label className="wsb-history__filter-date-label" htmlFor="wsb-filter-to">Au</label>
+            <input
+              type="date"
+              id="wsb-filter-to"
+              className="wsb-history__filter-date"
+              value={filters.dateTo}
+              onChange={e => updateFilter('dateTo', e.target.value)}
+            />
+          </div>
 
-        <button
-          type="button"
-          className="wsb-history__filter-apply"
-          onClick={handleApply}
-          disabled={isLoading}
-        >
-          {isLoading && <Spinner />}
-          Appliquer
-        </button>
-
-        {activeCount > 0 && (
-          <span className="wsb-history__filter-active" role="status" aria-live="polite">
-            {activeCount} filtre(s) actif(s)
-          </span>
-        )}
-
-        {activeCount > 0 && (
           <button
             type="button"
-            className="wsb-history__filter-reset"
-            onClick={handleReset}
+            className="wsb-history__filter-apply"
+            onClick={handleApply}
+            disabled={isLoading}
           >
-            Réinitialiser
+            {isLoading && <Spinner />}
+            Appliquer
           </button>
-        )}
-      </div>
 
-      <section className="wsb-history__section" aria-live="polite" aria-busy={isLoading}>
-        <div className="wsb-history__section-header">
-          <h2 className="wsb-history__section-title">Historique complet</h2>
-          {status === 'success' && <span className="wsb-history__count-badge">{total}</span>}
+          {activeCount > 0 && (
+            <span className="wsb-history__filter-active" role="status" aria-live="polite">
+              {activeCount} filtre(s) actif(s)
+            </span>
+          )}
+
+          {activeCount > 0 && (
+            <button
+              type="button"
+              className="wsb-history__filter-reset"
+              onClick={handleReset}
+            >
+              Réinitialiser
+            </button>
+          )}
         </div>
+      )}
 
-        <div className="wsb-history__table-wrap">
-          <table className="wsb-history__table" aria-label="Historique des réservations">
-            <thead>
-              <tr>
-                <th>N° PLACE</th><th>TYPE DE PLACE</th><th>ÉTAGE</th>
-                <th>DATE</th><th>HORAIRES</th><th>DURÉE</th><th>STATUT</th><th>ANNULÉE LE</th>
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading && Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} />)}
-              {status === 'success' && groups.map((g) => (
-                <Fragment key={g.label}>
-                  <tr className="wsb-history__month-row"><td colSpan={8}>{g.label}</td></tr>
-                  {g.rows.map((item) => <HistoryRow key={item.sysId} item={item} />)}
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {isEmptyNoFilters && (
+        <WsbEmptyState
+          variant="empty-history"
+          message="Vous n'avez pas encore d'historique de réservations."
+          actionLabel="Réserver un espace"
+          onAction={() => navigateTo('search')}
+        />
+      )}
 
-        {status === 'error' && (
-          <p className="wsb-history__message wsb-history__message--error" role="alert">
-            Une erreur est survenue.{' '}
-            <button type="button" className="wsb-history__retry-btn" onClick={() => fetchItems(offset, appliedFilters)}>Réessayer</button>
-          </p>
-        )}
-        {status === 'empty' && (
-          <p className="wsb-history__message" role="status">
-            {activeCount > 0
-              ? 'Aucune réservation ne correspond à ces critères.'
-              : 'Aucune réservation dans votre historique.'}
-          </p>
-        )}
+      {isError && errorCode === 403 && (
+        <WsbEmptyState
+          variant="forbidden"
+          message={getErrorMessage(403)}
+        />
+      )}
 
-        {status === 'success' && (
-          <div className="wsb-history__footer">
-            <p className="wsb-history__counter">
-              Affichage {from}–{to} sur {total} réservation{total !== 1 ? 's' : ''}
-            </p>
-            {totalPages > 1 && (
-              <nav className="wsb-history__pagination" aria-label="Pagination de l'historique">
-                <button
-                  type="button"
-                  className="wsb-history__page-btn"
-                  onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
-                  disabled={currentPage === 1}
-                  aria-label="Page précédente"
-                  aria-disabled={currentPage === 1}
-                >‹</button>
-                <button
-                  type="button"
-                  className="wsb-history__page-btn"
-                  onClick={() => setOffset((o) => o + PAGE_SIZE)}
-                  disabled={currentPage === totalPages}
-                  aria-label="Page suivante"
-                  aria-disabled={currentPage === totalPages}
-                >›</button>
-              </nav>
+      {isError && errorCode !== 403 && (
+        <WsbEmptyState
+          variant="error"
+          message={getErrorMessage(errorCode)}
+          actionLabel="Réessayer"
+          onAction={() => fetchItems(offset, appliedFilters)}
+        />
+      )}
+
+      {showContent && (
+        <section className="wsb-history__section" aria-live="polite" aria-busy={isLoading}>
+          <div className="wsb-history__section-header">
+            <h2 className="wsb-history__section-title">Historique complet</h2>
+            {(status === 'success' || isEmptyFiltered) && (
+              <span className="wsb-history__count-badge">{total}</span>
             )}
           </div>
-        )}
-      </section>
+
+          {(isLoading || status === 'success') && (
+            <div className="wsb-history__table-wrap">
+              <table className="wsb-history__table" aria-label="Historique des réservations">
+                <thead>
+                  <tr>
+                    <th>N° PLACE</th><th>TYPE DE PLACE</th><th>ÉTAGE</th>
+                    <th>DATE</th><th>HORAIRES</th><th>DURÉE</th><th>STATUT</th><th>ANNULÉE LE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {isLoading && Array.from({ length: 6 }, (_, i) => <SkeletonRow key={i} />)}
+                  {status === 'success' && groups.map((g) => (
+                    <Fragment key={g.label}>
+                      <tr className="wsb-history__month-row"><td colSpan={8}>{g.label}</td></tr>
+                      {g.rows.map((item) => <HistoryRow key={item.sysId} item={item} />)}
+                    </Fragment>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {isEmptyFiltered && (
+            <WsbEmptyState
+              variant="empty-filtered"
+              message="Aucune réservation ne correspond à vos critères."
+              actionLabel="Réinitialiser les filtres"
+              onAction={handleReset}
+            />
+          )}
+
+          {status === 'success' && (
+            <div className="wsb-history__footer">
+              <p className="wsb-history__counter">
+                Affichage {from}–{to} sur {total} réservation{total !== 1 ? 's' : ''}
+              </p>
+              {totalPages > 1 && (
+                <nav className="wsb-history__pagination" aria-label="Pagination de l'historique">
+                  <button
+                    type="button"
+                    className="wsb-history__page-btn"
+                    onClick={() => setOffset((o) => Math.max(0, o - PAGE_SIZE))}
+                    disabled={currentPage === 1}
+                    aria-label="Page précédente"
+                    aria-disabled={currentPage === 1}
+                  >‹</button>
+                  <button
+                    type="button"
+                    className="wsb-history__page-btn"
+                    onClick={() => setOffset((o) => o + PAGE_SIZE)}
+                    disabled={currentPage === totalPages}
+                    aria-label="Page suivante"
+                    aria-disabled={currentPage === totalPages}
+                  >›</button>
+                </nav>
+              )}
+            </div>
+          )}
+
+          {isEmptyFiltered && (
+            <div className="wsb-history__footer">
+              <p className="wsb-history__counter">0 réservation</p>
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }
