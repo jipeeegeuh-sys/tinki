@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2648" height="110" viewBox="0 0 2648 110">
+  <rect width="2648" height="110" fill="#F8FAFC"/>
+  <!-- Edges -->
+
+  <!-- Nodes -->
+<rect x="32" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="114" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Contrôle d'accès par …</text>
+
+<rect x="252" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="334" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Formulaire de recherc…</text>
+
+<rect x="472" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="554" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Erreur de validation …</text>
+
+<rect x="692" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="774" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Grille des résultats</text>
+
+<rect x="912" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="994" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Aucun résultat</text>
+
+<rect x="1132" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="1214" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Chargement des dispon…</text>
+
+<rect x="1352" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="1434" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Confirmation de réser…</text>
+
+<rect x="1572" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="1654" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Mes Reservation</text>
+
+<rect x="1792" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="1874" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Confirmation d'annula…</text>
+
+<rect x="2012" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="2094" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Edition d'une reserva…</text>
+
+<rect x="2232" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="2314" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Conflit de disponibil…</text>
+
+<rect x="2452" y="32" width="164" height="46" rx="8" fill="#4F46E5" stroke="#3730A3" stroke-width="1.5"/>
+<text x="2534" y="55" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="600" font-family="system-ui,sans-serif">Historique</text>
+
+</svg>
