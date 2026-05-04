@@ -31,7 +31,7 @@ describe('Wsb404Page', () => {
   test('le CTA redirige vers la page search', () => {
     render(<Wsb404Page />);
     fireEvent.click(screen.getByRole('button', { name: /Retour à l'accueil/ }));
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_search.do');
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_search.do');
   });
 
   test('porte role="alert" pour l\'accessibilité', () => {

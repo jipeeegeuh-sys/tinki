@@ -74,10 +74,10 @@ describe('WsbParkingFieldset', () => {
     expect(onParkingTypeChange).toHaveBeenCalledWith('electric');
   });
 
-  test('calls onParkingTypeChange with "thermal" when radio selected', () => {
+  test('calls onParkingTypeChange with "thermique" when radio selected', () => {
     const { onParkingTypeChange } = renderFieldset({ needsCar: true });
     fireEvent.click(screen.getByLabelText('Thermique'));
-    expect(onParkingTypeChange).toHaveBeenCalledWith('thermal');
+    expect(onParkingTypeChange).toHaveBeenCalledWith('thermique');
   });
 
   test('shows info message when electric is selected', () => {
@@ -87,8 +87,8 @@ describe('WsbParkingFieldset', () => {
     ).toBeInTheDocument();
   });
 
-  test('hides info message when thermal is selected', () => {
-    renderFieldset({ needsCar: true, parkingType: 'thermal' });
+  test('hides info message when thermique is selected', () => {
+    renderFieldset({ needsCar: true, parkingType: 'thermique' });
     expect(
       screen.queryByText('8 places électriques disponibles dans le parc')
     ).not.toBeInTheDocument();
@@ -102,7 +102,7 @@ describe('WsbParkingFieldset', () => {
   });
 
   test('each radio has a for/id association', () => {
-    renderFieldset({ needsCar: true, parkingType: 'thermal' });
+    renderFieldset({ needsCar: true, parkingType: 'thermique' });
     const radio = screen.getByLabelText('Thermique');
     expect(radio).toBeChecked();
     expect(radio.id).toBeTruthy();

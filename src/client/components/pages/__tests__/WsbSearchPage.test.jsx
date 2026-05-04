@@ -230,7 +230,7 @@ describe('WsbSearchPage — soumission réussie', () => {
     expect(navigateTo).toHaveBeenCalledWith('results', expect.objectContaining({
       building: 'A',
       floor: '3',
-      type: 'openspace-classique',
+      type: 'openspace',
     }));
   });
 });
@@ -241,7 +241,7 @@ describe('WsbSearchPage — pré-remplissage depuis query params', () => {
       building: 'A',
       floor: '3',
       date: '2026-05-11',
-      type: 'openspace-classique',
+      type: 'openspace',
     });
     render(<WsbSearchPage />);
     expect(document.getElementById('search-building')).toHaveTextContent('Bâtiment A');
@@ -255,7 +255,7 @@ describe('WsbSearchPage — pré-remplissage depuis query params', () => {
       building: 'A',
       floor: '3',
       date: '2026-05-11',
-      type: 'openspace-classique',
+      type: 'openspace',
       car: 'true',
       parking: 'electric',
     });
@@ -288,6 +288,17 @@ describe('WsbSearchPage — pré-remplissage depuis query params', () => {
       date: '2026-05-12',
       type: 'phonebox',
     }));
+  });
+
+  test('focus building on return from URL with all 4 params', () => {
+    getCurrentParams.mockReturnValueOnce({
+      building: 'B',
+      floor: '4',
+      date: '2026-05-12',
+      type: 'phonebox',
+    });
+    render(<WsbSearchPage />);
+    expect(document.activeElement).toBe(document.getElementById('search-building'));
   });
 });
 
@@ -360,7 +371,7 @@ describe('WsbSearchPage — US-1.03 activation conditionnelle du CTA', () => {
       building: 'A',
       floor: '3',
       date: '2026-05-11',
-      type: 'openspace-classique',
+      type: 'openspace',
     });
     render(<WsbSearchPage />);
     const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
@@ -386,5 +397,97 @@ describe('WsbSearchPage — US-1.03 activation conditionnelle du CTA', () => {
     render(<WsbSearchPage />);
     const dateInput = screen.getByLabelText(/^Date/);
     expect(dateInput.className).toContain('wsb-search-page__date-input--filled');
+  });
+});
+
+describe('WsbSearchPage — US-1.05 soumission, spinner et double-clic', () => {
+  function fillAllFields() {
+    fireEvent.click(document.getElementById('search-building'));
+    fireEvent.click(screen.getByText('Bâtiment A'));
+    fireEvent.click(document.getElementById('search-floor'));
+    fireEvent.click(screen.getByText('Niv. 3'));
+    fireEvent.click(document.getElementById('search-space-type'));
+    fireEvent.click(screen.getByText('Openspace classique'));
+  }
+
+  test('bouton affiche le spinner après soumission réussie', () => {
+    render(<WsbSearchPage />);
+    fillAllFields();
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
+    expect(btn).toHaveAttribute('aria-busy', 'true');
+  });
+
+  test('bouton est bloqué (aria-disabled) après soumission', () => {
+    render(<WsbSearchPage />);
+    fillAllFields();
+    fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
+    const btn = screen.getByRole('button', { name: 'Lancer la recherche' });
+    expect(btn).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  test('double-submit ne déclenche navigateTo qu\'une seule fois', () => {
+    render(<WsbSearchPage />);
+    fillAllFields();
+    const form = screen.getByRole('form', { name: /Recherche d'espace/ });
+    fireEvent.submit(form);
+    fireEvent.submit(form);
+    expect(navigateTo).toHaveBeenCalledTimes(1);
+  });
+
+  test('query string mapping : type=openspace pour "Openspace classique"', () => {
+    render(<WsbSearchPage />);
+    fillAllFields();
+    fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
+    expect(navigateTo).toHaveBeenCalledWith('results', expect.objectContaining({
+      type: 'openspace',
+    }));
+  });
+
+  test('query string mapping : type=meetingroom pour "Meeting Room"', () => {
+    render(<WsbSearchPage />);
+    fireEvent.click(document.getElementById('search-building'));
+    fireEvent.click(screen.getByText('Bâtiment A'));
+    fireEvent.click(document.getElementById('search-floor'));
+    fireEvent.click(screen.getByText('Niv. 3'));
+    fireEvent.click(document.getElementById('search-space-type'));
+    fireEvent.click(screen.getByText('Meeting Room'));
+    fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
+    expect(navigateTo).toHaveBeenCalledWith('results', expect.objectContaining({
+      type: 'meetingroom',
+    }));
+  });
+
+  test('query string mapping : car=true&parking=thermique pour toggle On + Thermique', () => {
+    render(<WsbSearchPage />);
+    fillAllFields();
+    fireEvent.click(screen.getByRole('switch'));
+    fireEvent.click(screen.getByLabelText('Thermique'));
+    fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
+    expect(navigateTo).toHaveBeenCalledWith('results', expect.objectContaining({
+      car: 'true',
+      parking: 'thermique',
+    }));
+  });
+
+  test('query string mapping : car=true&parking=electric pour toggle On + Électrique', () => {
+    render(<WsbSearchPage />);
+    fillAllFields();
+    fireEvent.click(screen.getByRole('switch'));
+    fireEvent.click(screen.getByLabelText('Électrique ⚡'));
+    fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
+    expect(navigateTo).toHaveBeenCalledWith('results', expect.objectContaining({
+      car: 'true',
+      parking: 'electric',
+    }));
+  });
+
+  test('query string : car et parking absents quand toggle Off', () => {
+    render(<WsbSearchPage />);
+    fillAllFields();
+    fireEvent.submit(screen.getByRole('form', { name: /Recherche d'espace/ }));
+    const params = navigateTo.mock.calls[0][1];
+    expect(params).not.toHaveProperty('car');
+    expect(params).not.toHaveProperty('parking');
   });
 });

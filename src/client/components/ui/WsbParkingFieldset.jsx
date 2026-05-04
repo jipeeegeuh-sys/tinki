@@ -1,7 +1,7 @@
 import './WsbParkingFieldset.css';
 
 const PARKING_OPTIONS = [
-  { value: 'thermal', label: 'Thermique' },
+  { value: 'thermique', label: 'Thermique' },
   { value: 'electric', label: 'Électrique ⚡' },
 ];
 

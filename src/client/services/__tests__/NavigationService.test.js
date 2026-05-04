@@ -17,26 +17,26 @@ describe('PAGES — constantes', () => {
     expect(Object.keys(PAGES)).toEqual(['search', 'results', 'reservations', 'history', 'edit']);
   });
 
-  test('chaque page est préfixée x_wsb_flex_', () => {
+  test('chaque page est préfixée x_wsb_flexoffice_', () => {
     Object.values(PAGES).forEach((v) => {
-      expect(v).toMatch(/^x_wsb_flex_/);
+      expect(v).toMatch(/^x_wsb_flexoffice_/);
     });
   });
 });
 
 describe('buildPageUrl', () => {
   test('retourne page.do sans params', () => {
-    expect(buildPageUrl('search')).toBe('x_wsb_flex_search.do');
+    expect(buildPageUrl('search')).toBe('x_wsb_flexoffice_search.do');
   });
 
   test('ajoute les query params', () => {
     const url = buildPageUrl('results', { type: 'bureau', date: '2026-05-01' });
-    expect(url).toBe('x_wsb_flex_results.do?type=bureau&date=2026-05-01');
+    expect(url).toBe('x_wsb_flexoffice_results.do?type=bureau&date=2026-05-01');
   });
 
   test('ignore les params null ou vides', () => {
     const url = buildPageUrl('results', { type: 'bureau', floor: null, zone: '' });
-    expect(url).toBe('x_wsb_flex_results.do?type=bureau');
+    expect(url).toBe('x_wsb_flexoffice_results.do?type=bureau');
   });
 
   test('lance une erreur pour une page inconnue', () => {
@@ -106,12 +106,12 @@ describe('navigateTo', () => {
 
   test('redirige vers la bonne URL', () => {
     navigateTo('search');
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_search.do');
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_search.do');
   });
 
   test('redirige avec des params', () => {
     navigateTo('results', { type: 'bureau', date: '2026-05-01' });
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_results.do?type=bureau&date=2026-05-01');
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_results.do?type=bureau&date=2026-05-01');
   });
 });
 
@@ -135,7 +135,7 @@ describe('guardResultsPage', () => {
     const result = guardResultsPage();
     expect(result.valid).toBe(false);
     expect(result.missing).toContain('type');
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_search.do');
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_search.do');
   });
 
   test('redirige vers search si date manquante', () => {
@@ -195,7 +195,7 @@ describe('guardEditPage', () => {
     window.location.search = '';
     const result = guardEditPage();
     expect(result.valid).toBe(false);
-    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flex_reservations.do');
+    expect(hrefSetter).toHaveBeenCalledWith('x_wsb_flexoffice_reservations.do');
   });
 
   test('retourne valid=true si sys_id présent', () => {
@@ -209,25 +209,25 @@ describe('guardEditPage', () => {
 
 describe('isKnownPage', () => {
   test('reconnaît les pages du scope avec .do', () => {
-    expect(isKnownPage('x_wsb_flex_search.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flex_results.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flex_reservations.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flex_history.do')).toBe(true);
-    expect(isKnownPage('x_wsb_flex_edit.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flexoffice_search.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flexoffice_results.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flexoffice_reservations.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flexoffice_history.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flexoffice_edit.do')).toBe(true);
   });
 
   test('reconnaît les pages du scope sans .do', () => {
-    expect(isKnownPage('x_wsb_flex_search')).toBe(true);
+    expect(isKnownPage('x_wsb_flexoffice_search')).toBe(true);
   });
 
   test('rejette une page inconnue', () => {
-    expect(isKnownPage('x_wsb_flex_unknown.do')).toBe(false);
+    expect(isKnownPage('x_wsb_flexoffice_unknown.do')).toBe(false);
     expect(isKnownPage('other_page.do')).toBe(false);
   });
 });
 
 describe('getSearchUrl', () => {
   test('retourne l\'URL de la page search', () => {
-    expect(getSearchUrl()).toBe('x_wsb_flex_search.do');
+    expect(getSearchUrl()).toBe('x_wsb_flexoffice_search.do');
   });
 });

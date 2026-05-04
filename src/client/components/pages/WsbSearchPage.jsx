@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { WsbSelect } from '../ui/WsbSelect.jsx';
 import { WsbButton } from '../ui/WsbButton.jsx';
 import { WsbParkingFieldset } from '../ui/WsbParkingFieldset.jsx';
@@ -25,10 +25,10 @@ const FLOOR_OPTIONS = [
 ];
 
 const SPACE_TYPE_OPTIONS = [
-  { value: 'openspace-classique', label: 'Openspace classique' },
-  { value: 'openspace-specialise', label: 'Openspace spécialisé (RH, Compta…)' },
+  { value: 'openspace', label: 'Openspace classique' },
+  { value: 'openspace-spe', label: 'Openspace spécialisé (RH, Compta…)' },
   { value: 'phonebox', label: 'Phone Box' },
-  { value: 'meeting', label: 'Meeting Room' },
+  { value: 'meetingroom', label: 'Meeting Room' },
 ];
 
 const CalendarIcon = () => (
@@ -75,8 +75,12 @@ export function WsbSearchPage() {
   const [needsCar, setNeedsCar] = useState(urlParams.car === 'true');
   const [parkingType, setParkingType] = useState(urlParams.parking || '');
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isFormComplete = Boolean(building && floor && date && spaceType);
+  const isPreFilled = Boolean(
+    urlParams.building && urlParams.floor && urlParams.date && urlParams.type
+  );
 
   const fieldRefs = {
     building: useRef(null),
@@ -97,6 +101,12 @@ export function WsbSearchPage() {
     }
   }, []);
 
+  useEffect(() => {
+    if (isPreFilled && fieldRefs.building.current) {
+      fieldRefs.building.current.focus();
+    }
+  }, []);
+
   const handleDateChange = (e) => {
     const val = e.target.value;
     if (!val || isWeekend(val)) return;
@@ -108,6 +118,8 @@ export function WsbSearchPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const errs = validate({ building, floor, date, spaceType });
 
     if (Object.keys(errs).length > 0) {
@@ -117,6 +129,8 @@ export function WsbSearchPage() {
     }
 
     setErrors({});
+    setIsSubmitting(true);
+
     const params = {
       building,
       floor,
@@ -253,6 +267,7 @@ export function WsbSearchPage() {
             variant="primary"
             size="md"
             disabled={!isFormComplete}
+            loading={isSubmitting}
             tooltip={!isFormComplete ? 'Complétez tous les champs' : ''}
           >
             Lancer la recherche
