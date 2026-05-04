@@ -1,0 +1,146 @@
+.wsb-booking-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.wsb-booking-card:not(.wsb-booking-card--occupied):hover {
+  border-color: rgba(161, 0, 255, 0.35);
+  box-shadow: 0 0 0 1px rgba(161, 0, 255, 0.2);
+}
+
+.wsb-booking-card--occupied {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.wsb-booking-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wsb-booking-card__type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wsb-booking-card__status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.wsb-booking-card__status--available {
+  color: #00c853;
+}
+
+.wsb-booking-card__status--occupied {
+  color: #90a4ae;
+}
+
+/* ── Identity ────────────────────────────────────────────────────────────── */
+.wsb-booking-card__identity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.wsb-booking-card__space-id {
+  margin: 0;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.wsb-booking-card__space-sub {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+}
+
+/* ── Meta ────────────────────────────────────────────────────────────────── */
+.wsb-booking-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.wsb-booking-card__floor {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* ── Electric indicator ──────────────────────────────────────────────────── */
+.wsb-booking-card__electric {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #ffa500;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.wsb-booking-card__footer {
+  margin-top: auto;
+  padding-top: 0.5rem;
+}
+
+.wsb-booking-card__cta {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  background: rgba(161, 0, 255, 0.15);
+  color: #c266ff;
+  border: 1px solid rgba(161, 0, 255, 0.35);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  min-height: 44px;
+}
+
+.wsb-booking-card__cta:hover {
+  background: rgba(161, 0, 255, 0.25);
+  border-color: rgba(161, 0, 255, 0.6);
+}
+
+.wsb-booking-card__cta:focus-visible {
+  outline: 2px solid #a100ff;
+  outline-offset: 2px;
+}
+
+.wsb-booking-card__unavailable {
+  display: block;
+  width: 100%;
+  padding: 0.65rem 1rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+}
