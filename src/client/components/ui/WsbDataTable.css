@@ -1,0 +1,135 @@
+/* ── Data Table wrapper ──────────────────────────────────────────────────── */
+.wsb-data-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.wsb-data-table thead th {
+  padding: 0.75rem 1rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--wsb-color-text-muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: left;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.wsb-data-table__th--sortable {
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.wsb-data-table__th--sortable:hover {
+  color: var(--wsb-color-text-secondary);
+}
+
+.wsb-data-table__th-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.wsb-data-table__sort-icon {
+  display: inline-flex;
+  width: 12px;
+  height: 12px;
+  opacity: 0.5;
+  transition: opacity 0.15s, transform 0.2s;
+}
+
+.wsb-data-table__th--sorted .wsb-data-table__sort-icon {
+  opacity: 1;
+  color: var(--wsb-color-primary);
+}
+
+.wsb-data-table__sort-icon--desc {
+  transform: rotate(180deg);
+}
+
+/* ── Empty body ──────────────────────────────────────────────────────────── */
+.wsb-data-table__empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--wsb-color-text-muted);
+  font-size: 0.9rem;
+}
+
+/* ── Pagination ──────────────────────────────────────────────────────────── */
+.wsb-data-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.wsb-data-table-footer__info {
+  font-size: 0.78rem;
+  color: var(--wsb-color-text-muted);
+}
+
+.wsb-data-table-pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.wsb-data-table-pagination__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--wsb-radius-md);
+  background: transparent;
+  color: var(--wsb-color-text-secondary);
+  font-family: var(--wsb-font-family);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.wsb-data-table-pagination__btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.wsb-data-table-pagination__btn:focus-visible {
+  outline: 2px solid var(--wsb-color-primary);
+  outline-offset: 2px;
+}
+
+.wsb-data-table-pagination__btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.wsb-data-table-pagination__btn--active {
+  background: var(--wsb-color-primary);
+  border-color: var(--wsb-color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.wsb-data-table-pagination__btn--active:hover:not(:disabled) {
+  background: var(--wsb-color-primary-hover);
+}
+
+/* ── Group header (for history grouping) ─────────────────────────────────── */
+.wsb-data-table__group-header td {
+  padding: 1rem 1rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--wsb-color-primary);
+  border-bottom: none;
+}

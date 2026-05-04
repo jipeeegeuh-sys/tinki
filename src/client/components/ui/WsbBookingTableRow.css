@@ -1,0 +1,153 @@
+/* ── Table Row ───────────────────────────────────────────────────────────── */
+.wsb-table-row {
+  transition: background 0.15s;
+}
+
+.wsb-table-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.wsb-table-row td {
+  padding: 0.875rem 1rem;
+  font-size: 0.85rem;
+  color: var(--wsb-color-text-primary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+/* ── Space ID ────────────────────────────────────────────────────────────── */
+.wsb-table-row__space-id {
+  font-family: var(--wsb-font-mono);
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: -0.01em;
+}
+
+/* ── Type badge ──────────────────────────────────────────────────────────── */
+.wsb-table-row__type-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.wsb-table-row__electric-icon {
+  display: inline-flex;
+  margin-right: 0.15rem;
+}
+
+/* ── Floor / Date / Time / Duration ──────────────────────────────────────── */
+.wsb-table-row__floor,
+.wsb-table-row__date,
+.wsb-table-row__duration {
+  color: var(--wsb-color-text-secondary);
+  font-size: 0.85rem;
+}
+
+.wsb-table-row__time {
+  font-family: var(--wsb-font-mono);
+  font-size: 0.8rem;
+  color: var(--wsb-color-text-secondary);
+}
+
+/* ── Status badge ────────────────────────────────────────────────────────── */
+.wsb-table-row__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.wsb-table-row__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.wsb-table-row__status--en-cours .wsb-table-row__status-dot {
+  background: #00c853;
+}
+.wsb-table-row__status--en-cours {
+  color: #00c853;
+}
+
+.wsb-table-row__status--a-venir .wsb-table-row__status-dot {
+  background: #ffa000;
+}
+.wsb-table-row__status--a-venir {
+  color: #ffa000;
+}
+
+.wsb-table-row__status--en-attente .wsb-table-row__status-dot {
+  background: #ff6d00;
+}
+.wsb-table-row__status--en-attente {
+  color: #ff6d00;
+}
+
+.wsb-table-row__status--terminee .wsb-table-row__status-dot {
+  background: rgba(255, 255, 255, 0.35);
+}
+.wsb-table-row__status--terminee {
+  color: var(--wsb-color-text-muted);
+}
+
+.wsb-table-row__status--annulee .wsb-table-row__status-dot {
+  background: #e53935;
+}
+.wsb-table-row__status--annulee {
+  color: #e53935;
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+.wsb-table-row__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.wsb-table-row__action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--wsb-font-family);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.wsb-table-row__action:hover {
+  opacity: 0.8;
+}
+
+.wsb-table-row__action:focus-visible {
+  outline: 2px solid var(--wsb-color-primary);
+  outline-offset: 2px;
+  border-radius: var(--wsb-radius-sm);
+}
+
+.wsb-table-row__action--edit {
+  color: var(--wsb-color-primary);
+}
+
+.wsb-table-row__action--cancel {
+  color: var(--wsb-color-danger);
+}
+
+.wsb-table-row__action-icon {
+  display: inline-flex;
+  width: 14px;
+  height: 14px;
+}
