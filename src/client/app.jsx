@@ -6,6 +6,7 @@ import { WsbHeader } from './components/layout/WsbHeader.jsx';
 import { WsbSearchPage } from './components/pages/WsbSearchPage.jsx';
 import { WsbResultsPage } from './components/pages/WsbResultsPage.jsx';
 import { WsbHistoryPage } from './components/pages/WsbHistoryPage.jsx';
+import { WsbEditPage } from './components/pages/WsbEditPage.jsx';
 import { Wsb404Page } from './components/pages/Wsb404Page.jsx';
 import { PAGES } from './services/NavigationService.js';
 
@@ -55,10 +56,11 @@ export function resolveCurrentPage() {
 
 function PageContent({ page }) {
   switch (page) {
-    case 'search': return <WsbSearchPage />;
-    case 'results': return <WsbResultsPage />;
-    case 'history': return <WsbHistoryPage />;
-    default: return null;
+    case 'search':       return <WsbSearchPage />;
+    case 'results':      return <WsbResultsPage />;
+    case 'history':      return <WsbHistoryPage />;
+    case 'edit':         return <WsbEditPage />;
+    default:             return null;
   }
 }
 
