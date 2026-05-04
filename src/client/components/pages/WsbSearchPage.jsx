@@ -72,7 +72,7 @@ export function WsbSearchPage() {
   const [floor, setFloor] = useState(urlParams.floor || '');
   const [date, setDate] = useState(() => urlParams.date || formatDateISO(getNextBusinessDay()));
   const [spaceType, setSpaceType] = useState(urlParams.type || '');
-  const [needsCar, setNeedsCar] = useState(Boolean(urlParams.parking));
+  const [needsCar, setNeedsCar] = useState(urlParams.car === 'true');
   const [parkingType, setParkingType] = useState(urlParams.parking || '');
   const [errors, setErrors] = useState({});
 
@@ -123,8 +123,11 @@ export function WsbSearchPage() {
       date,
       type: spaceType,
     };
-    if (needsCar && parkingType) {
-      params.parking = parkingType;
+    if (needsCar) {
+      params.car = 'true';
+      if (parkingType) {
+        params.parking = parkingType;
+      }
     }
     navigateTo('results', params);
   };
@@ -235,7 +238,10 @@ export function WsbSearchPage() {
           </legend>
           <WsbParkingFieldset
             needsCar={needsCar}
-            onNeedsCarChange={setNeedsCar}
+            onNeedsCarChange={(val) => {
+              setNeedsCar(val);
+              if (!val) setParkingType('');
+            }}
             parkingType={parkingType}
             onParkingTypeChange={setParkingType}
           />

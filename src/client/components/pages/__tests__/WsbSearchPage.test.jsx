@@ -207,8 +207,8 @@ describe('WsbSearchPage — parking fieldset', () => {
     render(<WsbSearchPage />);
     fireEvent.click(screen.getByRole('switch'));
     expect(screen.getByText('Type de parking souhaité')).toBeInTheDocument();
-    expect(screen.getByLabelText('Place thermique')).toBeInTheDocument();
-    expect(screen.getByLabelText('Place électrique')).toBeInTheDocument();
+    expect(screen.getByLabelText('Thermique')).toBeInTheDocument();
+    expect(screen.getByLabelText('Électrique ⚡')).toBeInTheDocument();
   });
 });
 
@@ -250,17 +250,18 @@ describe('WsbSearchPage — pré-remplissage depuis query params', () => {
     expect(document.getElementById('search-space-type')).toHaveTextContent('Openspace classique');
   });
 
-  test('pré-remplit le parking depuis le query param parking=electrique', () => {
+  test('pré-remplit le parking depuis les query params car=true&parking=electric', () => {
     getCurrentParams.mockReturnValueOnce({
       building: 'A',
       floor: '3',
       date: '2026-05-11',
       type: 'openspace-classique',
-      parking: 'electrique',
+      car: 'true',
+      parking: 'electric',
     });
     render(<WsbSearchPage />);
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByLabelText('Place électrique')).toBeChecked();
+    expect(screen.getByLabelText('Électrique ⚡')).toBeChecked();
   });
 
   test('utilise les valeurs par défaut si aucun query param', () => {

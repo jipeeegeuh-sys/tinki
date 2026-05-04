@@ -45,12 +45,29 @@
   transform: translateX(18px);
 }
 
+/* ── Animated wrapper ────────────────────────────────────────────────── */
+.wsb-parking__radios-wrapper {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease, opacity 0.2s ease;
+}
+
+.wsb-parking__radios-wrapper--open {
+  max-height: 200px;
+  opacity: 1;
+}
+
 /* ── Radio fieldset ──────────────────────────────────────────────────── */
 .wsb-parking__radios {
   border: 1px solid var(--wsb-color-border);
   border-radius: var(--wsb-radius-md);
   padding: var(--wsb-space-4);
   margin-top: var(--wsb-space-3);
+}
+
+.wsb-parking__radios:disabled {
+  opacity: 0.5;
 }
 
 .wsb-parking__legend {
@@ -83,4 +100,12 @@
   font-size: 0.85rem;
   color: var(--wsb-color-text-primary);
   cursor: pointer;
+}
+
+/* ── Info message ────────────────────────────────────────────────────── */
+.wsb-parking__info {
+  font-size: 0.75rem;
+  color: var(--wsb-color-text-muted);
+  margin: var(--wsb-space-2) 0 0;
+  padding-left: var(--wsb-space-4);
 }

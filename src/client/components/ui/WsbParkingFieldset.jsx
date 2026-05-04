@@ -1,8 +1,8 @@
 import './WsbParkingFieldset.css';
 
 const PARKING_OPTIONS = [
-  { value: 'thermique', label: 'Place thermique' },
-  { value: 'electrique', label: 'Place électrique' },
+  { value: 'thermal', label: 'Thermique' },
+  { value: 'electric', label: 'Électrique ⚡' },
 ];
 
 export function WsbParkingFieldset({
@@ -14,11 +14,16 @@ export function WsbParkingFieldset({
   const toggleId = 'parking-toggle';
   const groupName = 'parking-type';
 
+  const wrapperCls = [
+    'wsb-parking__radios-wrapper',
+    needsCar ? 'wsb-parking__radios-wrapper--open' : '',
+  ].filter(Boolean).join(' ');
+
   return (
     <div className="wsb-parking">
       <div className="wsb-parking__toggle-row">
         <label htmlFor={toggleId} className="wsb-parking__toggle-label">
-          Venez-vous en voiture ?
+          Venez-vous en voiture&nbsp;?
         </label>
         <button
           type="button"
@@ -35,8 +40,8 @@ export function WsbParkingFieldset({
         </button>
       </div>
 
-      {needsCar && (
-        <fieldset className="wsb-parking__radios">
+      <div className={wrapperCls} aria-hidden={!needsCar}>
+        <fieldset className="wsb-parking__radios" disabled={!needsCar}>
           <legend className="wsb-parking__legend">
             Type de parking souhaité
           </legend>
@@ -50,6 +55,7 @@ export function WsbParkingFieldset({
                 checked={parkingType === opt.value}
                 onChange={() => onParkingTypeChange(opt.value)}
                 className="wsb-parking__radio"
+                tabIndex={needsCar ? 0 : -1}
               />
               <label
                 htmlFor={`${groupName}-${opt.value}`}
@@ -60,7 +66,12 @@ export function WsbParkingFieldset({
             </div>
           ))}
         </fieldset>
-      )}
+        {parkingType === 'electric' && (
+          <p className="wsb-parking__info" role="status">
+            8 places électriques disponibles dans le parc
+          </p>
+        )}
+      </div>
     </div>
   );
 }
