@@ -1,6 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getRecord } from '../../services/ApiService.js';
 import { guardEditPage, navigateTo } from '../../services/NavigationService.js';
+import { getTomorrowISO, isWeekend } from '../../lib/dateUtils.js';
+import { buildAriaError, FormError } from '../../lib/useFocusError.js';
 import { WsbButton } from '../ui/WsbButton.jsx';
 import './WsbEditPage.css';
 
@@ -28,6 +30,17 @@ const FLOOR_LABELS = {
 
 function normalizeTime(val) {
   return val ? String(val).slice(0, 5) : '';
+}
+
+function validateSchedule(date, arrival, depart) {
+  const errors = {};
+  if (date && isWeekend(date)) {
+    errors.date = 'Les réservations ne sont possibles que les jours ouvrés.';
+  }
+  if (arrival && depart && depart <= arrival) {
+    errors.depart = "L'heure de départ doit être postérieure à l'heure d'arrivée.";
+  }
+  return errors;
 }
 
 function parseBooking(raw) {
@@ -137,6 +150,10 @@ export function WsbEditPage() {
   const [arrival, setArrival] = useState('');
   const [depart,  setDepart]  = useState('');
   const [parking, setParking] = useState('none');
+  const minDate = useMemo(() => getTomorrowISO(), []);
+  const errors  = useMemo(() => validateSchedule(date, arrival, depart), [date, arrival, depart]);
+  const allFieldsFilled = date && arrival && depart;
+  const canSave = allFieldsFilled && Object.keys(errors).length === 0;
 
   const load = useCallback(async () => {
     if (!guard.valid) return;
@@ -186,8 +203,11 @@ export function WsbEditPage() {
                 id="wsb-edit-date"
                 className="wsb-edit__input"
                 value={date}
+                min={minDate}
                 onChange={e => setDate(e.target.value)}
+                {...buildAriaError('date', errors.date)}
               />
+              <FormError fieldName="date" error={errors.date} />
             </div>
             <div className="wsb-edit__field">
               <label htmlFor="wsb-edit-arrival" className="wsb-edit__label">
@@ -211,7 +231,9 @@ export function WsbEditPage() {
                 className="wsb-edit__input"
                 value={depart}
                 onChange={e => setDepart(e.target.value)}
+                {...buildAriaError('depart', errors.depart)}
               />
+              <FormError fieldName="depart" error={errors.depart} />
             </div>
           </div>
         </fieldset>
@@ -263,9 +285,9 @@ export function WsbEditPage() {
           </div>
         </fieldset>
 
-        {/* ── Actions (save wired in US-5.02) ──────────────────────────── */}
+        {/* ── Actions ──────────────────────────────────────────────────── */}
         <div className="wsb-edit__actions">
-          <WsbButton variant="primary" disabled tooltip="Fonctionnalité disponible prochainement">
+          <WsbButton variant="primary" disabled={!canSave}>
             Enregistrer les modifications
           </WsbButton>
           <WsbButton variant="secondary" onClick={() => navigateTo('reservations')}>
