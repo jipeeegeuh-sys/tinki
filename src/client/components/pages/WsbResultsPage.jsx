@@ -160,7 +160,7 @@ export function WsbResultsPage() {
         )}
 
         {status === 'success' && spaces.length > 0 && (
-          <div className="wsb-results-page__grid" role="list">
+          <div id="wsb-results-grid" className="wsb-results-page__grid" role="list">
             {spaces.map((space) => (
               <div key={space.sys_id} role="listitem">
                 <WsbBookingCard

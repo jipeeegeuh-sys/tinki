@@ -11,13 +11,13 @@
 }
 
 .wsb-booking-card:not(.wsb-booking-card--occupied):hover {
-  border-color: rgba(161, 0, 255, 0.35);
-  box-shadow: 0 0 0 1px rgba(161, 0, 255, 0.2);
+  border-color: #a100ff;
+  box-shadow: 0 4px 12px rgba(161, 0, 255, 0.15);
 }
 
 .wsb-booking-card--occupied {
   opacity: 0.45;
-  pointer-events: none;
+  cursor: not-allowed;
 }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
@@ -117,9 +117,9 @@
 .wsb-booking-card__cta {
   width: 100%;
   padding: 0.65rem 1rem;
-  background: rgba(161, 0, 255, 0.15);
-  color: #c266ff;
-  border: 1px solid rgba(161, 0, 255, 0.35);
+  background: #a100ff;
+  color: #fff;
+  border: 1px solid #a100ff;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -129,8 +129,8 @@
 }
 
 .wsb-booking-card__cta:hover {
-  background: rgba(161, 0, 255, 0.25);
-  border-color: rgba(161, 0, 255, 0.6);
+  background: #8a00e0;
+  border-color: #8a00e0;
 }
 
 .wsb-booking-card__cta:focus-visible {
@@ -145,7 +145,7 @@
   text-align: center;
   font-size: 0.85rem;
   font-weight: 500;
-  color: rgba(255, 255, 255, 0.3);
+  color: #999999;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 8px;
 }

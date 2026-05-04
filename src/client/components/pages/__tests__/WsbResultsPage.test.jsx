@@ -122,6 +122,40 @@ describe('WsbResultsPage — succès API', () => {
     const items = screen.getAllByRole('listitem');
     expect(items).toHaveLength(3);
   });
+
+  test('la grille possède l\'id wsb-results-grid', async () => {
+    const { container } = render(<WsbResultsPage />);
+    await waitFor(() => {
+      expect(container.querySelector('#wsb-results-grid')).toBeInTheDocument();
+    });
+  });
+
+  test('la grille #wsb-results-grid contient exactement N listitem', async () => {
+    const { container } = render(<WsbResultsPage />);
+    await waitFor(() => {
+      const grid = container.querySelector('#wsb-results-grid');
+      expect(grid).not.toBeNull();
+      expect(grid.querySelectorAll('[role="listitem"]')).toHaveLength(MOCK_SPACES.length);
+    });
+  });
+
+  test('les cards disponibles n\'ont pas la classe --occupied', async () => {
+    const { container } = render(<WsbResultsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('A-101')).toBeInTheDocument();
+    });
+    const cards = container.querySelectorAll('.wsb-booking-card:not(.wsb-booking-card--occupied)');
+    expect(cards).toHaveLength(2);
+  });
+
+  test('la card occupée porte la classe --occupied', async () => {
+    const { container } = render(<WsbResultsPage />);
+    await waitFor(() => {
+      expect(screen.getByText('A-103')).toBeInTheDocument();
+    });
+    const occupiedCards = container.querySelectorAll('.wsb-booking-card--occupied');
+    expect(occupiedCards).toHaveLength(1);
+  });
 });
 
 describe('WsbResultsPage — critères de recherche', () => {

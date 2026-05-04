@@ -5,6 +5,7 @@ const TYPE_CONFIG = {
   'openspace-classique':  { label: 'Open Space',           bg: 'rgba(0,200,83,0.15)',  text: '#00C853', border: 'rgba(0,200,83,0.3)' },
   'openspace-specialise': { label: 'Openspace spécialisé', bg: 'rgba(0,200,83,0.15)',  text: '#00C853', border: 'rgba(0,200,83,0.3)' },
   'phonebox':             { label: 'Phonebox',             bg: 'rgba(0,145,234,0.15)', text: '#0091EA', border: 'rgba(0,145,234,0.3)' },
+  'meetingroom':          { label: 'Meeting Room',         bg: 'rgba(255,152,0,0.15)', text: '#FF9800', border: 'rgba(255,152,0,0.3)' },
   'parking-electrique':   { label: 'Parking électrique',   bg: 'rgba(0,200,83,0.15)',  text: '#00C853', border: 'rgba(0,200,83,0.3)', electric: true },
   'parking-thermique':    { label: 'Parking',              bg: 'rgba(84,110,122,0.15)',text: '#90A4AE', border: 'rgba(84,110,122,0.3)' },
 };
