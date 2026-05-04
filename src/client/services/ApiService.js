@@ -22,7 +22,9 @@ export async function fetchJson(endpoint, options = {}) {
     timeout = DEFAULT_TIMEOUT,
   } = options;
 
-  let url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}/${endpoint}`;
+  let url = endpoint.startsWith('http') || endpoint.startsWith('/')
+    ? endpoint
+    : `${BASE_URL}/${endpoint}`;
 
   if (params) {
     const qs = new URLSearchParams(params).toString();
@@ -86,4 +88,8 @@ export function updateRecord(table, sysId, body) {
 
 export function createRecord(table, body) {
   return fetchJson(table, { method: 'POST', body });
+}
+
+export function getAvailableSpaces(params) {
+  return fetchJson('/api/x_wsb/v1/spaces/available', { params });
 }

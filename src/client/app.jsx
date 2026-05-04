@@ -4,38 +4,39 @@ import { WsbSkipLink } from './components/ui/WsbSkipLink.jsx';
 import { LiveRegionProvider } from './components/ui/WsbLiveRegion.jsx';
 import { WsbHeader } from './components/layout/WsbHeader.jsx';
 import { WsbSearchPage } from './components/pages/WsbSearchPage.jsx';
+import { WsbResultsPage } from './components/pages/WsbResultsPage.jsx';
 import { Wsb404Page } from './components/pages/Wsb404Page.jsx';
 import { PAGES } from './services/NavigationService.js';
 
 const PAGE_CONFIG = {
   search: {
     breadcrumb: [
-      { label: 'Accueil', href: 'x_wsb_flex_search.do' },
+      { label: 'Accueil', href: 'x_wsb_flexoffice_search.do' },
       { label: 'Rechercher une place' },
     ],
   },
   results: {
     breadcrumb: [
-      { label: 'Accueil', href: 'x_wsb_flex_search.do' },
+      { label: 'Accueil', href: 'x_wsb_flexoffice_search.do' },
       { label: 'Résultats de recherche' },
     ],
   },
   reservations: {
     breadcrumb: [
-      { label: 'Accueil', href: 'x_wsb_flex_search.do' },
+      { label: 'Accueil', href: 'x_wsb_flexoffice_search.do' },
       { label: 'Mes réservations' },
     ],
   },
   history: {
     breadcrumb: [
-      { label: 'Accueil', href: 'x_wsb_flex_search.do' },
+      { label: 'Accueil', href: 'x_wsb_flexoffice_search.do' },
       { label: 'Historique' },
     ],
   },
   edit: {
     breadcrumb: [
-      { label: 'Accueil', href: 'x_wsb_flex_search.do' },
-      { label: 'Mes réservations', href: 'x_wsb_flex_reservations.do' },
+      { label: 'Accueil', href: 'x_wsb_flexoffice_search.do' },
+      { label: 'Mes réservations', href: 'x_wsb_flexoffice_reservations.do' },
       { label: 'Éditer' },
     ],
   },
@@ -47,13 +48,14 @@ export function resolveCurrentPage() {
   for (const [key, name] of Object.entries(PAGES)) {
     if (path.includes(name)) return key;
   }
-  if (path.includes('x_wsb_flex_')) return null;
+  if (path.includes('x_wsb_flexoffice_') || path.includes('x_wsb_flex_')) return null;
   return 'search';
 }
 
 function PageContent({ page }) {
   switch (page) {
     case 'search': return <WsbSearchPage />;
+    case 'results': return <WsbResultsPage />;
     default: return null;
   }
 }
