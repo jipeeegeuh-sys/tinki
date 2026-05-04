@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getRecord, updateRecord, fetchTablePage } from '../../services/ApiService.js';
-import { guardEditPage, navigateTo } from '../../services/NavigationService.js';
+import { guardEditPage, navigateTo, buildPageUrl } from '../../services/NavigationService.js';
 import { getTomorrowISO, isWeekend } from '../../lib/dateUtils.js';
 import { buildAriaError, FormError } from '../../lib/useFocusError.js';
 import { useToast } from '../../lib/useToast.js';
@@ -85,6 +85,11 @@ function SkeletonSection({ labelWidth = '25%', children }) {
 function SkeletonEditForm() {
   return (
     <div className="wsb-edit" aria-busy="true" aria-label="Chargement de la réservation">
+      <nav className="wsb-edit__breadcrumb" aria-label="Fil d'Ariane">
+        <a href={buildPageUrl('reservations')} className="wsb-edit__breadcrumb-link">
+          ← Mes réservations
+        </a>
+      </nav>
       <div className="wsb-edit__header">
         <div className="wsb-skeleton wsb-skeleton--badge" style={{ width: 70, marginBottom: 8 }} aria-hidden="true" />
         <div className="wsb-skeleton wsb-skeleton--title" style={{ width: '50%', height: 36, marginBottom: 8 }} aria-hidden="true" />
@@ -265,6 +270,11 @@ export function WsbEditPage() {
 
   return (
     <div className="wsb-edit">
+      <nav className="wsb-edit__breadcrumb" aria-label="Fil d'Ariane">
+        <a href={buildPageUrl('reservations')} className="wsb-edit__breadcrumb-link">
+          ← Mes réservations
+        </a>
+      </nav>
       <div className="wsb-edit__header">
         <span className="wsb-edit__badge">ÉDITION</span>
         <h1 className="wsb-edit__title">Modifier ma réservation</h1>

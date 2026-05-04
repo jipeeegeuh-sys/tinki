@@ -8,6 +8,7 @@ jest.mock('../../../services/NavigationService.js', () => ({
     params: { sys_id: 'abc123' },
   })),
   navigateTo: jest.fn(),
+  buildPageUrl: jest.fn((page) => `x_wsb_flexoffice_${page}.do`),
 }));
 
 const mockToast = { success: jest.fn(), error: jest.fn(), warning: jest.fn(), info: jest.fn() };
@@ -608,5 +609,94 @@ describe('WsbEditPage — US-5.05 conflict display & recovery', () => {
     expect(
       screen.queryByText(/Aucune place de stationnement/),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe('WsbEditPage — US-5.06 cancel & breadcrumb navigation', () => {
+  beforeEach(() => {
+    getRecord.mockResolvedValue({ ...mockDefaultRecord });
+    updateRecord.mockClear();
+    updateRecord.mockResolvedValue({});
+    fetchTablePage.mockClear();
+    fetchTablePage.mockResolvedValue({ items: [], total: 0 });
+    mockToast.success.mockClear();
+    mockToast.error.mockClear();
+    mockToast.warning.mockClear();
+    mockToast.info.mockClear();
+    navigateTo.mockClear();
+  });
+
+  test('cancel button navigates to reservations', async () => {
+    render(<WsbEditPage />);
+    const cancelBtn = await screen.findByRole('button', { name: 'Annuler' });
+    fireEvent.click(cancelBtn);
+    expect(navigateTo).toHaveBeenCalledWith('reservations');
+  });
+
+  test('cancel button does not trigger PATCH', async () => {
+    render(<WsbEditPage />);
+    const cancelBtn = await screen.findByRole('button', { name: 'Annuler' });
+    fireEvent.click(cancelBtn);
+    expect(updateRecord).not.toHaveBeenCalled();
+  });
+
+  test('cancel button does not show any toast', async () => {
+    render(<WsbEditPage />);
+    const cancelBtn = await screen.findByRole('button', { name: 'Annuler' });
+    fireEvent.click(cancelBtn);
+    expect(mockToast.success).not.toHaveBeenCalled();
+    expect(mockToast.error).not.toHaveBeenCalled();
+    expect(mockToast.warning).not.toHaveBeenCalled();
+    expect(mockToast.info).not.toHaveBeenCalled();
+  });
+
+  test('cancel after modifying fields does not trigger PATCH', async () => {
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Annuler' });
+
+    fireEvent.change(screen.getByLabelText('Date'), {
+      target: { value: '2026-05-20' },
+    });
+    fireEvent.change(screen.getByLabelText("Heure d'arrivée"), {
+      target: { value: '10:00' },
+    });
+    fireEvent.click(screen.getByRole('radio', { name: 'Thermique' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
+
+    expect(updateRecord).not.toHaveBeenCalled();
+    expect(fetchTablePage).not.toHaveBeenCalled();
+    expect(navigateTo).toHaveBeenCalledWith('reservations');
+  });
+
+  test('breadcrumb link is present and points to reservations page', async () => {
+    render(<WsbEditPage />);
+    const breadcrumb = await screen.findByRole('link', {
+      name: '← Mes réservations',
+    });
+    expect(breadcrumb).toBeInTheDocument();
+    expect(breadcrumb).toHaveAttribute(
+      'href',
+      'x_wsb_flexoffice_reservations.do',
+    );
+  });
+
+  test('breadcrumb is inside a nav with aria-label', async () => {
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Annuler' });
+    const breadcrumb = screen.getByRole('link', {
+      name: '← Mes réservations',
+    });
+    const nav = breadcrumb.closest('nav');
+    expect(nav).not.toBeNull();
+    expect(nav).toHaveAttribute('aria-label');
+  });
+
+  test('breadcrumb is present in skeleton loading state', () => {
+    render(<WsbEditPage />);
+    const breadcrumb = screen.getByRole('link', {
+      name: '← Mes réservations',
+    });
+    expect(breadcrumb).toBeInTheDocument();
   });
 });

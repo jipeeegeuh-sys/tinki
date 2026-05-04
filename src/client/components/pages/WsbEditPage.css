@@ -5,6 +5,29 @@
   padding: var(--wsb-space-6) var(--wsb-space-5);
 }
 
+/* ── Breadcrumb ─────────────────────────────────────────────────────────── */
+.wsb-edit__breadcrumb {
+  margin-bottom: var(--wsb-space-4);
+}
+
+.wsb-edit__breadcrumb-link {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--wsb-color-text-secondary);
+  text-decoration: none;
+  transition: color 150ms ease;
+}
+
+.wsb-edit__breadcrumb-link:hover {
+  color: var(--wsb-color-text-primary);
+}
+
+.wsb-edit__breadcrumb-link:focus-visible {
+  outline: 2px solid var(--wsb-color-primary);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
 /* ── Header ──────────────────────────────────────────────────────────────── */
 .wsb-edit__header {
   margin-bottom: var(--wsb-space-6);
