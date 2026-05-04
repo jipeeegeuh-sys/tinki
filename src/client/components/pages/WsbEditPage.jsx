@@ -7,10 +7,15 @@ import { WsbButton } from '../ui/WsbButton.jsx';
 import './WsbEditPage.css';
 
 const PARKING_OPTIONS = [
-  { value: 'none',       label: 'Aucun' },
+  { value: 'none',       label: 'Aucun parking' },
   { value: 'thermique',  label: 'Thermique' },
-  { value: 'electrique', label: 'Électrique' },
+  { value: 'electrique', label: 'Électrique (⚡)' },
 ];
+
+const PARKING_HINTS = {
+  none:       'Votre réservation ne comprendra aucune place de stationnement.',
+  electrique: '8 places électriques dans le parc.',
+};
 
 const TYPE_LABELS = {
   'openspace-classique':  'Open Space classique',
@@ -264,7 +269,7 @@ export function WsbEditPage() {
         {/* ── Stationnement ─────────────────────────────────────────────── */}
         <fieldset className="wsb-edit__fieldset">
           <legend className="wsb-edit__legend">Place de stationnement</legend>
-          <div className="wsb-edit__radios" role="group" aria-label="Type de stationnement souhaité">
+          <div className="wsb-edit__radios" role="radiogroup" aria-label="Type de stationnement souhaité">
             {PARKING_OPTIONS.map(({ value, label }) => (
               <label
                 key={value}
@@ -283,6 +288,11 @@ export function WsbEditPage() {
               </label>
             ))}
           </div>
+          {PARKING_HINTS[parking] && (
+            <p className="wsb-edit__parking-hint" aria-live="polite">
+              {PARKING_HINTS[parking]}
+            </p>
+          )}
         </fieldset>
 
         {/* ── Actions ──────────────────────────────────────────────────── */}

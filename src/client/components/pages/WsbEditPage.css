@@ -215,6 +215,14 @@
   background: var(--wsb-color-primary);
 }
 
+/* ── Parking hint ───────────────────────────────────────────────────────── */
+.wsb-edit__parking-hint {
+  margin: var(--wsb-space-3) 0 0;
+  font-size: 0.8rem;
+  color: var(--wsb-color-text-muted);
+  line-height: 1.4;
+}
+
 /* ── Actions ─────────────────────────────────────────────────────────────── */
 .wsb-edit__actions {
   display: flex;

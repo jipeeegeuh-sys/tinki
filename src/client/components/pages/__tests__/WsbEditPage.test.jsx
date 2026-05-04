@@ -10,27 +10,33 @@ jest.mock('../../../services/NavigationService.js', () => ({
   navigateTo: jest.fn(),
 }));
 
+const mockDefaultRecord = {
+  sys_id: 'abc123',
+  number: 'RITM0010042',
+  short_description: JSON.stringify({
+    spaceId: 'A-102',
+    type: 'bureau',
+    floor: '3',
+    date: '2026-05-12',
+    start: '08:30',
+    end: '18:00',
+  }),
+  u_parking_space: 'none',
+};
+
 jest.mock('../../../services/ApiService.js', () => ({
-  getRecord: jest.fn(() =>
-    Promise.resolve({
-      sys_id: 'abc123',
-      number: 'RITM0010042',
-      short_description: JSON.stringify({
-        spaceId: 'A-102',
-        type: 'bureau',
-        floor: '3',
-        date: '2026-05-12',
-        start: '08:30',
-        end: '18:00',
-      }),
-      u_parking_space: 'none',
-    }),
-  ),
+  getRecord: jest.fn(() => Promise.resolve({ ...mockDefaultRecord })),
 }));
+
+const { getRecord } = require('../../../services/ApiService.js');
 
 import { WsbEditPage } from '../WsbEditPage';
 
 describe('WsbEditPage — US-5.02 date & time validation', () => {
+  beforeEach(() => {
+    getRecord.mockResolvedValue({ ...mockDefaultRecord });
+  });
+
   test('date input has min attribute blocking past dates', async () => {
     render(<WsbEditPage />);
     const dateInput = await screen.findByLabelText('Date');
@@ -146,5 +152,103 @@ describe('WsbEditPage — US-5.02 date & time validation', () => {
     const departInput = screen.getByLabelText('Heure de départ');
     fireEvent.change(departInput, { target: { value: '' } });
     expect(saveBtn).toHaveAttribute('aria-disabled', 'true');
+  });
+});
+
+describe('WsbEditPage — US-5.03 parking modes', () => {
+  afterEach(() => {
+    getRecord.mockReset();
+  });
+
+  function mockWithParking(parkingValue) {
+    getRecord.mockResolvedValueOnce({
+      ...mockDefaultRecord,
+      u_parking_space: parkingValue,
+    });
+  }
+
+  test('Mode 1 — pre-selects Thermique when reservation has thermique', async () => {
+    mockWithParking('thermique');
+    render(<WsbEditPage />);
+    const radio = await screen.findByRole('radio', { name: 'Thermique' });
+    expect(radio).toBeChecked();
+  });
+
+  test('Mode 1 — pre-selects Électrique when reservation has electrique', async () => {
+    mockWithParking('electrique');
+    render(<WsbEditPage />);
+    const radio = await screen.findByRole('radio', { name: /Électrique/ });
+    expect(radio).toBeChecked();
+  });
+
+  test('Mode 2 — switching from thermique to électrique selects the new option', async () => {
+    mockWithParking('thermique');
+    render(<WsbEditPage />);
+    const thermiqueRadio = await screen.findByRole('radio', { name: 'Thermique' });
+    expect(thermiqueRadio).toBeChecked();
+
+    const electriqueRadio = screen.getByRole('radio', { name: /Électrique/ });
+    fireEvent.click(electriqueRadio);
+    expect(electriqueRadio).toBeChecked();
+    expect(thermiqueRadio).not.toBeChecked();
+  });
+
+  test('Mode 2 — shows hint text when électrique is selected', async () => {
+    mockWithParking('electrique');
+    render(<WsbEditPage />);
+    expect(
+      await screen.findByText('8 places électriques dans le parc.'),
+    ).toBeInTheDocument();
+  });
+
+  test('Mode 3 — selecting Aucun parking shows removal message', async () => {
+    mockWithParking('thermique');
+    render(<WsbEditPage />);
+    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
+    fireEvent.click(aucunRadio);
+    expect(aucunRadio).toBeChecked();
+    expect(
+      screen.getByText(/ne comprendra aucune place de stationnement/),
+    ).toBeInTheDocument();
+  });
+
+  test('Mode 4 — pre-selects Aucun parking when no parking existed', async () => {
+    mockWithParking('none');
+    render(<WsbEditPage />);
+    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
+    expect(aucunRadio).toBeChecked();
+  });
+
+  test('Mode 4 — null u_parking_space defaults to Aucun parking', async () => {
+    getRecord.mockResolvedValueOnce({
+      ...mockDefaultRecord,
+      u_parking_space: null,
+    });
+    render(<WsbEditPage />);
+    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
+    expect(aucunRadio).toBeChecked();
+  });
+
+  test('Mode 4 — adding parking from none selects the chosen type', async () => {
+    mockWithParking('none');
+    render(<WsbEditPage />);
+    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
+    expect(aucunRadio).toBeChecked();
+
+    const thermiqueRadio = screen.getByRole('radio', { name: 'Thermique' });
+    fireEvent.click(thermiqueRadio);
+    expect(thermiqueRadio).toBeChecked();
+    expect(aucunRadio).not.toBeChecked();
+    expect(
+      screen.queryByText(/ne comprendra aucune place/),
+    ).not.toBeInTheDocument();
+  });
+
+  test('no hint shown when Thermique is selected', async () => {
+    mockWithParking('thermique');
+    render(<WsbEditPage />);
+    await screen.findByRole('radio', { name: 'Thermique' });
+    expect(screen.queryByText(/8 places électriques/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ne comprendra aucune/)).not.toBeInTheDocument();
   });
 });
