@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { ToastProvider, useToast } from '../../../lib/useToast.js';
@@ -38,13 +39,14 @@ describe('WsbToast — rendu', () => {
 
   test('affiche les 4 variantes sans erreur', () => {
     const types = ['success', 'error', 'warning', 'info'];
-    render(
-      <Wrapper>
-        {types.map((t) => <ToastButton key={t} type={t} message={`msg-${t}`} />)}
-      </Wrapper>
-    );
-    types.forEach((t) => fireEvent.click(screen.getByText(`show-${t}`)));
-    types.forEach((t) => expect(screen.getByText(`msg-${t}`)).toBeInTheDocument());
+    types.forEach((type) => {
+      const { unmount } = render(
+        <Wrapper><ToastButton type={type} message={`msg-${type}`} /></Wrapper>
+      );
+      fireEvent.click(screen.getByText(`show-${type}`));
+      expect(screen.getByText(`msg-${type}`)).toBeInTheDocument();
+      unmount();
+    });
   });
 
   test('container porte aria-live="assertive"', () => {
