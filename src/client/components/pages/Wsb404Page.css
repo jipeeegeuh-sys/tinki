@@ -1,0 +1,30 @@
+.wsb-404 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: var(--wsb-space-8);
+  text-align: center;
+  gap: var(--wsb-space-4);
+}
+
+.wsb-404__icon {
+  color: var(--wsb-color-text-muted);
+  margin-bottom: var(--wsb-space-2);
+}
+
+.wsb-404__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--wsb-color-text-primary);
+}
+
+.wsb-404__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--wsb-color-text-secondary);
+  max-width: 400px;
+  line-height: 1.5;
+}

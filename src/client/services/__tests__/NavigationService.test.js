@@ -6,6 +6,8 @@ import {
   navigateTo,
   guardResultsPage,
   guardEditPage,
+  isKnownPage,
+  getSearchUrl,
   PAGES,
   RESULTS_REQUIRED_PARAMS,
 } from '../NavigationService.js';
@@ -129,7 +131,7 @@ describe('guardResultsPage', () => {
   });
 
   test('redirige vers search si type manquant', () => {
-    window.location.search = '?date=2026-05-01';
+    window.location.search = '?building=A&floor=3&date=2026-05-01';
     const result = guardResultsPage();
     expect(result.valid).toBe(false);
     expect(result.missing).toContain('type');
@@ -137,10 +139,24 @@ describe('guardResultsPage', () => {
   });
 
   test('redirige vers search si date manquante', () => {
-    window.location.search = '?type=bureau';
+    window.location.search = '?building=A&floor=3&type=bureau';
     const result = guardResultsPage();
     expect(result.valid).toBe(false);
     expect(result.missing).toContain('date');
+  });
+
+  test('redirige vers search si building manquant', () => {
+    window.location.search = '?floor=3&date=2026-05-01&type=bureau';
+    const result = guardResultsPage();
+    expect(result.valid).toBe(false);
+    expect(result.missing).toContain('building');
+  });
+
+  test('redirige vers search si floor manquant', () => {
+    window.location.search = '?building=A&date=2026-05-01&type=bureau';
+    const result = guardResultsPage();
+    expect(result.valid).toBe(false);
+    expect(result.missing).toContain('floor');
   });
 
   test('redirige vers search si aucun param', () => {
@@ -150,12 +166,12 @@ describe('guardResultsPage', () => {
     expect(result.missing).toEqual(RESULTS_REQUIRED_PARAMS);
   });
 
-  test('retourne valid=true si type et date présents', () => {
-    window.location.search = '?type=bureau&date=2026-05-01';
+  test('retourne valid=true si les 4 params requis sont présents', () => {
+    window.location.search = '?building=A&floor=3&date=2026-05-01&type=openspace-classique';
     const result = guardResultsPage();
     expect(result.valid).toBe(true);
     expect(result.missing).toEqual([]);
-    expect(result.params).toEqual({ type: 'bureau', date: '2026-05-01' });
+    expect(result.params).toEqual({ building: 'A', floor: '3', date: '2026-05-01', type: 'openspace-classique' });
     expect(hrefSetter).not.toHaveBeenCalled();
   });
 });
@@ -188,5 +204,30 @@ describe('guardEditPage', () => {
     expect(result.valid).toBe(true);
     expect(result.params).toEqual({ sys_id: 'abc123' });
     expect(hrefSetter).not.toHaveBeenCalled();
+  });
+});
+
+describe('isKnownPage', () => {
+  test('reconnaît les pages du scope avec .do', () => {
+    expect(isKnownPage('x_wsb_flex_search.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flex_results.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flex_reservations.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flex_history.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flex_edit.do')).toBe(true);
+  });
+
+  test('reconnaît les pages du scope sans .do', () => {
+    expect(isKnownPage('x_wsb_flex_search')).toBe(true);
+  });
+
+  test('rejette une page inconnue', () => {
+    expect(isKnownPage('x_wsb_flex_unknown.do')).toBe(false);
+    expect(isKnownPage('other_page.do')).toBe(false);
+  });
+});
+
+describe('getSearchUrl', () => {
+  test('retourne l\'URL de la page search', () => {
+    expect(getSearchUrl()).toBe('x_wsb_flex_search.do');
   });
 });

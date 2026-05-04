@@ -109,3 +109,10 @@
   grid-template-columns: 1fr 1fr;
   gap: var(--wsb-space-4);
 }
+
+/* ── Actions ─────────────────────────────────────────────────────────── */
+.wsb-search-page__actions {
+  display: flex;
+  gap: var(--wsb-space-4);
+  padding-top: var(--wsb-space-2);
+}

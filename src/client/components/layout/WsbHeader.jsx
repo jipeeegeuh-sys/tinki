@@ -84,10 +84,10 @@ export function WsbHeader({
               );
             })}
           </ul>
-          <div className="wsb-sidebar__section-label">RACCOURCIS</div>
+          <div className="wsb-sidebar__section-label">RESSOURCES</div>
           <ul className="wsb-sidebar__nav" role="list">
             <li>
-              <a href="/kb" className="wsb-sidebar__link">Aide</a>
+              <a href="/kb" className="wsb-sidebar__link">Aide &amp; Support</a>
             </li>
           </ul>
         </div>

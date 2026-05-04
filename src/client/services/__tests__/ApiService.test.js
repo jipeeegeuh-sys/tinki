@@ -146,7 +146,7 @@ describe('fetchJson — error handling', () => {
 });
 
 describe('fetchJson — timeout (AbortController)', () => {
-  test('lance ApiError 408 sur timeout', async () => {
+  test('lance ApiError avec status "timeout" sur abort', async () => {
     global.fetch.mockImplementation(() => {
       const abortErr = new DOMException('The operation was aborted.', 'AbortError');
       return Promise.reject(abortErr);
@@ -157,7 +157,7 @@ describe('fetchJson — timeout (AbortController)', () => {
     try {
       await fetchJson('x_wsb_flex_space', { timeout: 1 });
     } catch (e) {
-      expect(e.status).toBe(408);
+      expect(e.status).toBe('timeout');
     }
   });
 

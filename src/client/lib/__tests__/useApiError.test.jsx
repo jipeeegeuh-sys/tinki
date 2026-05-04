@@ -29,43 +29,52 @@ describe('useApiError — gestion des codes HTTP', () => {
   beforeEach(() => {
     hrefSetter = jest.fn();
     Object.defineProperty(window, 'location', {
-      value: { href: '' },
+      value: { href: 'http://instance.service-now.com/x_wsb_flex_search.do' },
       writable: true,
     });
     Object.defineProperty(window.location, 'href', {
       set: hrefSetter,
-      get: () => '',
+      get: () => 'http://instance.service-now.com/x_wsb_flex_search.do',
     });
     renderHook();
   });
 
-  test('401 → toast warning + redirect /login.do', () => {
+  test('401 → toast info + redirect /login.do?redirectTo=...', () => {
     act(() => {
       capturedHandleError(new ApiError(401, 'Unauthorized'));
     });
-    expect(screen.getByText(/session expirée/i)).toBeInTheDocument();
-    expect(hrefSetter).toHaveBeenCalledWith('/login.do');
+    expect(screen.getByText(/Votre session a expiré/)).toBeInTheDocument();
+    const redirectUrl = hrefSetter.mock.calls[0][0];
+    expect(redirectUrl).toMatch(/^\/login\.do\?redirectTo=/);
+    expect(redirectUrl).toContain(encodeURIComponent('http://instance.service-now.com/x_wsb_flex_search.do'));
   });
 
-  test('403 → toast error accès refusé', () => {
+  test('403 → toast error accès refusé (exact AC message)', () => {
     act(() => {
       capturedHandleError(new ApiError(403, 'Forbidden'));
     });
-    expect(screen.getByText(/accès refusé/i)).toBeInTheDocument();
+    expect(screen.getByText('Vous n\'êtes pas autorisé à effectuer cette action.')).toBeInTheDocument();
   });
 
-  test('408 → toast error timeout', () => {
+  test('timeout → toast error timeout', () => {
     act(() => {
-      capturedHandleError(new ApiError(408, 'Timeout'));
+      capturedHandleError(new ApiError('timeout', 'AbortController'));
     });
     expect(screen.getByText(/ne répond pas/i)).toBeInTheDocument();
   });
 
-  test('500 → toast error serveur', () => {
+  test('500 → toast error serveur (exact AC message)', () => {
     act(() => {
       capturedHandleError(new ApiError(500, 'Internal'));
     });
-    expect(screen.getByText(/erreur serveur/i)).toBeInTheDocument();
+    expect(screen.getByText('Une erreur est survenue. Veuillez réessayer.')).toBeInTheDocument();
+  });
+
+  test('503 → même message que 500', () => {
+    act(() => {
+      capturedHandleError(new ApiError(503, 'Service Unavailable'));
+    });
+    expect(screen.getByText('Une erreur est survenue. Veuillez réessayer.')).toBeInTheDocument();
   });
 
   test('404 avec body.error.message → affiche le message du body', () => {
@@ -86,7 +95,7 @@ describe('useApiError — gestion des codes HTTP', () => {
     act(() => {
       capturedHandleError(new ApiError(502, 'Bad Gateway'));
     });
-    expect(screen.getByText(/erreur serveur/i)).toBeInTheDocument();
+    expect(screen.getByText('Une erreur est survenue. Veuillez réessayer.')).toBeInTheDocument();
   });
 });
 

@@ -6,7 +6,7 @@ const PAGES = {
   edit:         'x_wsb_flex_edit',
 };
 
-const RESULTS_REQUIRED_PARAMS = ['type', 'date'];
+const RESULTS_REQUIRED_PARAMS = ['building', 'floor', 'date', 'type'];
 
 export function buildPageUrl(page, params = {}) {
   const pageName = PAGES[page];
@@ -62,6 +62,15 @@ export function guardEditPage() {
   }
 
   return { valid: true, params };
+}
+
+export function isKnownPage(endpoint) {
+  const name = endpoint.replace(/\.do$/, '');
+  return Object.values(PAGES).includes(name);
+}
+
+export function getSearchUrl() {
+  return buildPageUrl('search');
 }
 
 export { PAGES, RESULTS_REQUIRED_PARAMS };

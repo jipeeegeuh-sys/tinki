@@ -3,14 +3,16 @@ import { useToast } from './useToast.js';
 import { ApiError } from '../services/ApiService.js';
 
 const MESSAGES = {
-  401: 'Session expirée — reconnexion en cours…',
-  403: 'Accès refusé — droits insuffisants.',
-  408: 'Le serveur ne répond pas (timeout). Réessayez.',
-  500: 'Erreur serveur — veuillez réessayer ultérieurement.',
+  401: 'Votre session a expiré. Reconnexion en cours…',
+  403: 'Vous n\'êtes pas autorisé à effectuer cette action.',
+  timeout: 'Le serveur ne répond pas. Veuillez réessayer.',
 };
 
+const SERVER_ERROR_MSG = 'Une erreur est survenue. Veuillez réessayer.';
+
 function redirectToLogin() {
-  window.location.href = '/login.do';
+  const currentUrl = encodeURIComponent(window.location.href);
+  window.location.href = `/login.do?redirectTo=${currentUrl}`;
 }
 
 export function useApiError() {
@@ -23,16 +25,26 @@ export function useApiError() {
         return;
       }
 
-      const status = err.status;
+      const { status } = err;
 
       if (status === 401) {
-        toast.warning(MESSAGES[401]);
+        toast.info(MESSAGES[401]);
         redirectToLogin();
         return;
       }
 
-      if (MESSAGES[status]) {
-        toast.error(MESSAGES[status]);
+      if (status === 403) {
+        toast.error(MESSAGES[403]);
+        return;
+      }
+
+      if (status === 'timeout') {
+        toast.error(MESSAGES.timeout);
+        return;
+      }
+
+      if (status === 500 || status === 503) {
+        toast.error(SERVER_ERROR_MSG);
         return;
       }
 
@@ -41,7 +53,12 @@ export function useApiError() {
         return;
       }
 
-      toast.error(MESSAGES[500]);
+      if (status >= 500) {
+        toast.error(SERVER_ERROR_MSG);
+        return;
+      }
+
+      toast.error(SERVER_ERROR_MSG);
     },
     [toast],
   );

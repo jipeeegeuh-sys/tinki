@@ -1,0 +1,86 @@
+.wsb-parking__toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--wsb-space-4);
+}
+
+.wsb-parking__toggle-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--wsb-color-text-secondary);
+}
+
+/* ── Switch ──────────────────────────────────────────────────────────── */
+.wsb-parking__switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: var(--wsb-radius-full);
+  background: rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+
+.wsb-parking__switch--on {
+  background: var(--wsb-color-primary);
+}
+
+.wsb-parking__switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s;
+  pointer-events: none;
+}
+
+.wsb-parking__switch--on .wsb-parking__switch-thumb {
+  transform: translateX(18px);
+}
+
+/* ── Radio fieldset ──────────────────────────────────────────────────── */
+.wsb-parking__radios {
+  border: 1px solid var(--wsb-color-border);
+  border-radius: var(--wsb-radius-md);
+  padding: var(--wsb-space-4);
+  margin-top: var(--wsb-space-3);
+}
+
+.wsb-parking__legend {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--wsb-color-text-secondary);
+  padding: 0 var(--wsb-space-2);
+}
+
+.wsb-parking__radio-row {
+  display: flex;
+  align-items: center;
+  gap: var(--wsb-space-3);
+  margin-top: var(--wsb-space-2);
+}
+
+.wsb-parking__radio-row:first-of-type {
+  margin-top: var(--wsb-space-3);
+}
+
+.wsb-parking__radio {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--wsb-color-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.wsb-parking__radio-label {
+  font-size: 0.85rem;
+  color: var(--wsb-color-text-primary);
+  cursor: pointer;
+}

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import './WsbSelect.css';
 
 const ChevronIcon = () => (
@@ -7,7 +7,7 @@ const ChevronIcon = () => (
   </svg>
 );
 
-export function WsbSelect({
+export const WsbSelect = forwardRef(function WsbSelect({
   id,
   label,
   placeholder = 'Sélectionner…',
@@ -15,12 +15,20 @@ export function WsbSelect({
   value = '',
   onChange,
   required = false,
-}) {
+  error = '',
+}, ref) {
   const [open, setOpen] = useState(false);
   const [focusedIdx, setFocusedIdx] = useState(-1);
   const containerRef = useRef(null);
   const triggerRef = useRef(null);
+
+  useImperativeHandle(ref, () => ({
+    focus: () => triggerRef.current?.focus(),
+  }));
+
   const listId = `${id}-listbox`;
+  const errId = `err-${id}`;
+  const hasError = Boolean(error);
   const selected = options.find(o => o.value === value);
 
   useEffect(() => {
@@ -94,6 +102,8 @@ export function WsbSelect({
         aria-controls={listId}
         aria-labelledby={label ? `${id}-label` : undefined}
         aria-activedescendant={open && focusedIdx >= 0 ? `${id}-opt-${focusedIdx}` : undefined}
+        aria-invalid={hasError ? 'true' : undefined}
+        aria-errormessage={hasError ? errId : undefined}
         onClick={() => setOpen(prev => !prev)}
         onKeyDown={handleKeyDown}
       >
@@ -124,6 +134,11 @@ export function WsbSelect({
           ))}
         </ul>
       )}
+      {hasError && (
+        <span id={errId} className="wsb-form-error" role="alert">
+          {error}
+        </span>
+      )}
     </div>
   );
-}
+});

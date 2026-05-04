@@ -7,7 +7,7 @@ function getToken() {
 
 export class ApiError extends Error {
   constructor(status, statusText, body = null) {
-    super(`HTTP ${status} — ${statusText}`);
+    super(status === 'timeout' ? 'Request Timeout' : `HTTP ${status} — ${statusText}`);
     this.name = 'ApiError';
     this.status = status;
     this.body = body;
@@ -56,7 +56,7 @@ export async function fetchJson(endpoint, options = {}) {
     return json.result !== undefined ? json.result : json;
   } catch (err) {
     if (err.name === 'AbortError') {
-      throw new ApiError(408, 'Request Timeout (AbortController)');
+      throw new ApiError('timeout', 'AbortController');
     }
     throw err;
   } finally {

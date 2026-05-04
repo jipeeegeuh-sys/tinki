@@ -80,9 +80,9 @@ describe('WsbHeader — sidebar navigation', () => {
     expect(historyLink).not.toHaveAttribute('aria-current');
   });
 
-  test('affiche le lien Aide dans les raccourcis', () => {
+  test('affiche le lien Aide & Support dans les ressources', () => {
     renderHeader();
-    expect(screen.getByText('Aide')).toBeInTheDocument();
+    expect(screen.getByText('Aide & Support')).toBeInTheDocument();
   });
 });
 
@@ -107,10 +107,10 @@ describe('WsbHeader — sidebar user block', () => {
 });
 
 describe('WsbHeader — section labels', () => {
-  test('affiche NAVIGATION et RACCOURCIS', () => {
+  test('affiche NAVIGATION et RESSOURCES', () => {
     renderHeader();
     expect(screen.getByText('NAVIGATION')).toBeInTheDocument();
-    expect(screen.getByText('RACCOURCIS')).toBeInTheDocument();
+    expect(screen.getByText('RESSOURCES')).toBeInTheDocument();
   });
 });
 

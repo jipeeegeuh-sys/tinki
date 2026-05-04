@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { WsbSelect } from '../ui/WsbSelect.jsx';
+import { WsbButton } from '../ui/WsbButton.jsx';
+import { WsbParkingFieldset } from '../ui/WsbParkingFieldset.jsx';
+import { FormError, buildAriaError } from '../../lib/useFocusError.js';
+import { navigateTo, getCurrentParams } from '../../services/NavigationService.js';
 import {
   getNextBusinessDay,
   formatDateISO,
@@ -21,8 +25,8 @@ const FLOOR_OPTIONS = [
 ];
 
 const SPACE_TYPE_OPTIONS = [
-  { value: 'openspace', label: 'Openspace classique' },
-  { value: 'openspace-spe', label: 'Openspace spécialisé (RH, Compta…)' },
+  { value: 'openspace-classique', label: 'Openspace classique' },
+  { value: 'openspace-specialise', label: 'Openspace spécialisé (RH, Compta…)' },
   { value: 'phonebox', label: 'Phone Box' },
   { value: 'meeting', label: 'Meeting Room' },
 ];
@@ -51,17 +55,85 @@ const LocationIcon = () => (
   </svg>
 );
 
+const FIELD_ORDER = ['building', 'floor', 'date', 'type'];
+
+function validate({ building, floor, date, spaceType }) {
+  const errors = {};
+  if (!building) errors.building = 'Le bâtiment est requis.';
+  if (!floor) errors.floor = 'L\'étage est requis.';
+  if (!date) errors.date = 'La date est requise.';
+  if (!spaceType) errors.type = 'Le type d\'espace est requis.';
+  return errors;
+}
+
 export function WsbSearchPage() {
-  const [building, setBuilding] = useState('');
-  const [floor, setFloor] = useState('');
-  const [date, setDate] = useState(() => formatDateISO(getNextBusinessDay()));
-  const [spaceType, setSpaceType] = useState('');
+  const [urlParams] = useState(getCurrentParams);
+  const [building, setBuilding] = useState(urlParams.building || '');
+  const [floor, setFloor] = useState(urlParams.floor || '');
+  const [date, setDate] = useState(() => urlParams.date || formatDateISO(getNextBusinessDay()));
+  const [spaceType, setSpaceType] = useState(urlParams.type || '');
+  const [needsCar, setNeedsCar] = useState(Boolean(urlParams.parking));
+  const [parkingType, setParkingType] = useState(urlParams.parking || '');
+  const [errors, setErrors] = useState({});
+
+  const fieldRefs = {
+    building: useRef(null),
+    floor: useRef(null),
+    date: useRef(null),
+    type: useRef(null),
+  };
+
+  const focusFirstError = useCallback((errs) => {
+    for (const field of FIELD_ORDER) {
+      if (errs[field]) {
+        const ref = fieldRefs[field];
+        if (ref?.current) {
+          ref.current.focus();
+          return;
+        }
+      }
+    }
+  }, []);
 
   const handleDateChange = (e) => {
     const val = e.target.value;
     if (!val || isWeekend(val)) return;
     setDate(val);
+    if (errors.date) {
+      setErrors((prev) => ({ ...prev, date: '' }));
+    }
   };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const errs = validate({ building, floor, date, spaceType });
+
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      focusFirstError(errs);
+      return;
+    }
+
+    setErrors({});
+    const params = {
+      building,
+      floor,
+      date,
+      type: spaceType,
+    };
+    if (needsCar && parkingType) {
+      params.parking = parkingType;
+    }
+    navigateTo('results', params);
+  };
+
+  const clearFieldError = (field) => {
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const dateAriaProps = buildAriaError('date', errors.date);
 
   return (
     <div className="wsb-search-page">
@@ -77,7 +149,8 @@ export function WsbSearchPage() {
       <form
         className="wsb-search-page__card"
         aria-label="Recherche d'espace"
-        onSubmit={(e) => e.preventDefault()}
+        onSubmit={handleSubmit}
+        noValidate
       >
         <fieldset className="wsb-search-page__section">
           <legend className="wsb-search-page__section-title">
@@ -88,6 +161,7 @@ export function WsbSearchPage() {
               Date <span className="wsb-search-page__required" aria-hidden="true">*</span>
             </label>
             <input
+              ref={fieldRefs.date}
               type="date"
               id="search-date"
               className="wsb-search-page__date-input"
@@ -96,7 +170,9 @@ export function WsbSearchPage() {
               onChange={handleDateChange}
               required
               aria-required="true"
+              {...dateAriaProps}
             />
+            <FormError fieldName="date" error={errors.date} />
           </div>
         </fieldset>
 
@@ -105,13 +181,15 @@ export function WsbSearchPage() {
             <SpaceIcon /> TYPE D'ESPACE
           </legend>
           <WsbSelect
+            ref={fieldRefs.type}
             id="search-space-type"
             label="Type d'espace"
             placeholder="Sélectionner un type"
             options={SPACE_TYPE_OPTIONS}
             value={spaceType}
-            onChange={setSpaceType}
+            onChange={(val) => { setSpaceType(val); clearFieldError('type'); }}
             required
+            error={errors.type}
           />
         </fieldset>
 
@@ -121,25 +199,47 @@ export function WsbSearchPage() {
           </legend>
           <div className="wsb-search-page__row">
             <WsbSelect
+              ref={fieldRefs.building}
               id="search-building"
               label="Bâtiment"
               placeholder="Sélectionner un bâtiment"
               options={BUILDING_OPTIONS}
               value={building}
-              onChange={setBuilding}
+              onChange={(val) => { setBuilding(val); clearFieldError('building'); }}
               required
+              error={errors.building}
             />
             <WsbSelect
+              ref={fieldRefs.floor}
               id="search-floor"
               label="Étage"
               placeholder="Sélectionner un étage"
               options={FLOOR_OPTIONS}
               value={floor}
-              onChange={setFloor}
+              onChange={(val) => { setFloor(val); clearFieldError('floor'); }}
               required
+              error={errors.floor}
             />
           </div>
         </fieldset>
+
+        <fieldset className="wsb-search-page__section">
+          <legend className="wsb-search-page__section-title">
+            🚗 PARKING
+          </legend>
+          <WsbParkingFieldset
+            needsCar={needsCar}
+            onNeedsCarChange={setNeedsCar}
+            parkingType={parkingType}
+            onParkingTypeChange={setParkingType}
+          />
+        </fieldset>
+
+        <div className="wsb-search-page__actions">
+          <WsbButton type="submit" variant="primary" size="md">
+            Lancer la recherche
+          </WsbButton>
+        </div>
       </form>
     </div>
   );
