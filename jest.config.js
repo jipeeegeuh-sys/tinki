@@ -9,7 +9,11 @@ export default {
   },
   setupFilesAfterEnv: ['@testing-library/jest-dom'],
   testMatch: ['**/__tests__/**/*.test.{js,jsx}'],
-  collectCoverageFrom: ['src/client/components/**/*.{js,jsx}'],
+  collectCoverageFrom: [
+    'src/client/components/**/*.{js,jsx}',
+    'src/client/services/**/*.{js,jsx}',
+    'src/client/lib/**/*.{js,jsx}',
+  ],
   coverageThreshold: {
     global: { lines: 80, functions: 80 },
   },
