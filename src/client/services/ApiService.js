@@ -66,6 +66,36 @@ export async function fetchJson(endpoint, options = {}) {
   }
 }
 
+export async function fetchTablePage(table, params) {
+  const qs = new URLSearchParams(params).toString();
+  const url = `${BASE_URL}/${table}?${qs}`;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT);
+
+  try {
+    const res = await fetch(url, {
+      headers: { Accept: 'application/json', 'X-UserToken': getToken() },
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      let body = null;
+      try { body = await res.json(); } catch { /* ignore */ }
+      throw new ApiError(res.status, res.statusText, body);
+    }
+
+    const total = parseInt(res.headers.get('X-Total-Count') || '0', 10);
+    const json = await res.json();
+    const items = Array.isArray(json.result) ? json.result : [];
+    return { items, total };
+  } catch (err) {
+    if (err.name === 'AbortError') throw new ApiError('timeout', 'AbortController');
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function getSpaces(params) {
   return fetchJson('x_wsb_flex_space', { params });
 }
