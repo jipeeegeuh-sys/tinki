@@ -131,17 +131,22 @@ describe('WsbBookingTableRow — actions', () => {
 });
 
 describe('WsbBookingTableRow — aria-labels uniques', () => {
-  test('le bouton Éditer porte un aria-label avec le type et la date', () => {
+  test('le bouton Éditer porte un aria-label au format DD/MM/YYYY', () => {
     renderRow();
     const btn = screen.getByRole('button', { name: /Éditer réservation/ });
-    expect(btn).toHaveAttribute('aria-label', expect.stringContaining('Open Space A-102'));
-    expect(btn).toHaveAttribute('aria-label', expect.stringContaining('avr.'));
+    expect(btn).toHaveAttribute(
+      'aria-label',
+      'Éditer réservation Open Space A-102 du 30/04/2026'
+    );
   });
 
-  test('le bouton Annuler porte un aria-label avec le type et la date', () => {
+  test('le bouton Annuler porte un aria-label au format DD/MM/YYYY', () => {
     renderRow();
     const btn = screen.getByRole('button', { name: /Annuler réservation/ });
-    expect(btn).toHaveAttribute('aria-label', expect.stringContaining('Open Space A-102'));
+    expect(btn).toHaveAttribute(
+      'aria-label',
+      'Annuler réservation Open Space A-102 du 30/04/2026'
+    );
   });
 });
 
@@ -150,6 +155,13 @@ describe('WsbBookingTableRow — mode readonly', () => {
     renderRow({ readonly: true, status: 'en-cours' });
     expect(screen.queryByText('Éditer')).not.toBeInTheDocument();
     expect(screen.queryByText('Annuler')).not.toBeInTheDocument();
+  });
+
+  test('la cellule Actions n\'est pas rendue quand readonly=true', () => {
+    const { container } = renderRow({ readonly: true, status: 'en-cours' });
+    const cells = container.querySelectorAll('td');
+    const cellsWithoutDuration = 6;
+    expect(cells).toHaveLength(cellsWithoutDuration);
   });
 });
 

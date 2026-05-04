@@ -45,6 +45,14 @@ function formatDate(dateStr) {
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
+function formatDateAria(dateStr) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${day}/${month}/${date.getFullYear()}`;
+}
+
 export function WsbBookingTableRow({
   spaceId,
   type,
@@ -59,9 +67,10 @@ export function WsbBookingTableRow({
 }) {
   const cfg = TYPE_CONFIG[type] ?? DEFAULT_TYPE;
   const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG['en-cours'];
-  const showActions = !readonly && ACTIONABLE_STATUSES.has(status);
+  const canAct = ACTIONABLE_STATUSES.has(status);
   const displayDate = formatDate(date);
-  const ariaDesc = `${cfg.label} ${spaceId} du ${displayDate}`;
+  const ariaDate = formatDateAria(date);
+  const ariaDesc = `${cfg.label} ${spaceId} du ${ariaDate}`;
 
   return (
     <tr className="wsb-table-row">
@@ -89,30 +98,32 @@ export function WsbBookingTableRow({
           {statusCfg.label}
         </span>
       </td>
-      <td>
-        {showActions ? (
-          <span className="wsb-table-row__actions">
-            <button
-              type="button"
-              className="wsb-table-row__action wsb-table-row__action--edit"
-              aria-label={`Éditer réservation ${ariaDesc}`}
-              onClick={() => onEdit?.({ spaceId, type, date })}
-            >
-              <EditIcon />
-              Éditer
-            </button>
-            <button
-              type="button"
-              className="wsb-table-row__action wsb-table-row__action--cancel"
-              aria-label={`Annuler réservation ${ariaDesc}`}
-              onClick={() => onCancel?.({ spaceId, type, date })}
-            >
-              <CancelIcon />
-              Annuler
-            </button>
-          </span>
-        ) : null}
-      </td>
+      {!readonly && (
+        <td>
+          {canAct ? (
+            <span className="wsb-table-row__actions">
+              <button
+                type="button"
+                className="wsb-table-row__action wsb-table-row__action--edit"
+                aria-label={`Éditer réservation ${ariaDesc}`}
+                onClick={() => onEdit?.({ spaceId, type, date })}
+              >
+                <EditIcon />
+                Éditer
+              </button>
+              <button
+                type="button"
+                className="wsb-table-row__action wsb-table-row__action--cancel"
+                aria-label={`Annuler réservation ${ariaDesc}`}
+                onClick={() => onCancel?.({ spaceId, type, date })}
+              >
+                <CancelIcon />
+                Annuler
+              </button>
+            </span>
+          ) : null}
+        </td>
+      )}
     </tr>
   );
 }
