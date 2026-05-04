@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+.vite/
+.next/
+.nuxt/
+.output/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Synapse Bridge state
+.synapse/
+.synapse-session.json
+.synapse-backlog-pipeline.json
+.synapse-deploy.json
+
+# ServiceNow SDK
+.now-cli/
