@@ -215,6 +215,23 @@
   background: var(--wsb-color-primary);
 }
 
+/* ── Conflict banner ────────────────────────────────────────────────────── */
+.wsb-edit__conflict {
+  background: var(--wsb-color-danger-subtle);
+  border: 1px solid var(--wsb-color-danger);
+  border-radius: var(--wsb-radius-md);
+  color: var(--wsb-color-danger);
+  font-size: 0.85rem;
+  padding: var(--wsb-space-3) var(--wsb-space-4);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.wsb-edit__conflict:focus {
+  outline: 2px solid var(--wsb-color-danger);
+  outline-offset: 2px;
+}
+
 /* ── Parking hint ───────────────────────────────────────────────────────── */
 .wsb-edit__parking-hint {
   margin: var(--wsb-space-3) 0 0;

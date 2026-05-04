@@ -336,7 +336,7 @@ describe('WsbEditPage — US-5.04 save submission', () => {
     expect(navigateTo).toHaveBeenCalledWith('reservations');
   });
 
-  test('availability conflict shows error and blocks save', async () => {
+  test('availability conflict shows inline error and blocks save', async () => {
     fetchTablePage.mockResolvedValue({ items: [{ sys_id: 'conflict' }], total: 1 });
 
     render(<WsbEditPage />);
@@ -350,17 +350,16 @@ describe('WsbEditPage — US-5.04 save submission', () => {
     });
     fireEvent.click(saveBtn);
 
-    await waitFor(() => {
-      expect(mockToast.error).toHaveBeenCalledWith(
-        'Ce créneau est déjà réservé. Veuillez choisir un autre horaire.',
-      );
-    });
+    expect(
+      await screen.findByText(/n'est plus disponible sur ce créneau/),
+    ).toBeInTheDocument();
 
     expect(updateRecord).not.toHaveBeenCalled();
     expect(navigateTo).not.toHaveBeenCalled();
+    expect(mockToast.error).not.toHaveBeenCalled();
   });
 
-  test('parking-only change skips availability check', async () => {
+  test('parking-only change skips schedule check but runs parking check', async () => {
     render(<WsbEditPage />);
     await screen.findByRole('button', { name: 'Enregistrer les modifications' });
 
@@ -380,7 +379,13 @@ describe('WsbEditPage — US-5.04 save submission', () => {
       );
     });
 
-    expect(fetchTablePage).not.toHaveBeenCalled();
+    expect(fetchTablePage).toHaveBeenCalledTimes(1);
+    expect(fetchTablePage).toHaveBeenCalledWith(
+      'sc_req_item',
+      expect.objectContaining({
+        sysparm_query: expect.stringContaining('u_parking_space=thermique'),
+      }),
+    );
     expect(mockToast.success).toHaveBeenCalled();
     expect(navigateTo).toHaveBeenCalledWith('reservations');
   });
@@ -433,5 +438,175 @@ describe('WsbEditPage — US-5.04 save submission', () => {
         end: '18:00',
       }),
     );
+  });
+});
+
+describe('WsbEditPage — US-5.05 conflict display & recovery', () => {
+  beforeEach(() => {
+    getRecord.mockResolvedValue({ ...mockDefaultRecord });
+    updateRecord.mockClear();
+    updateRecord.mockResolvedValue({});
+    fetchTablePage.mockClear();
+    fetchTablePage.mockResolvedValue({ items: [], total: 0 });
+    mockToast.success.mockClear();
+    mockToast.error.mockClear();
+    navigateTo.mockClear();
+  });
+
+  // ── Schedule conflict ──────────────────────────────────────────────────
+
+  async function triggerScheduleConflict() {
+    fetchTablePage.mockResolvedValue({ items: [{ sys_id: 'x' }], total: 1 });
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+    fireEvent.change(screen.getByLabelText('Date'), {
+      target: { value: '2026-05-13' },
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Enregistrer les modifications' }),
+    );
+    await screen.findByText(/n'est plus disponible/);
+  }
+
+  test('schedule conflict — all three fields get aria-invalid', async () => {
+    await triggerScheduleConflict();
+
+    expect(screen.getByLabelText('Date')).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText("Heure d'arrivée")).toHaveAttribute('aria-invalid', 'true');
+    expect(screen.getByLabelText('Heure de départ')).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  test('schedule conflict — fields point to the conflict message id', async () => {
+    await triggerScheduleConflict();
+
+    for (const label of ['Date', "Heure d'arrivée", 'Heure de départ']) {
+      expect(screen.getByLabelText(label)).toHaveAttribute(
+        'aria-errormessage',
+        'conflict-schedule',
+      );
+    }
+  });
+
+  test('schedule conflict — save button remains active', async () => {
+    await triggerScheduleConflict();
+
+    const saveBtn = screen.getByRole('button', {
+      name: 'Enregistrer les modifications',
+    });
+    expect(saveBtn).toHaveAttribute('aria-disabled', 'false');
+  });
+
+  test('schedule conflict — changing date clears the error', async () => {
+    await triggerScheduleConflict();
+
+    fireEvent.change(screen.getByLabelText('Date'), {
+      target: { value: '2026-05-14' },
+    });
+
+    expect(screen.queryByText(/n'est plus disponible/)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Date')).not.toHaveAttribute('aria-invalid');
+  });
+
+  test('schedule conflict — changing arrival clears the error', async () => {
+    await triggerScheduleConflict();
+
+    fireEvent.change(screen.getByLabelText("Heure d'arrivée"), {
+      target: { value: '09:30' },
+    });
+
+    expect(screen.queryByText(/n'est plus disponible/)).not.toBeInTheDocument();
+  });
+
+  test('schedule conflict — changing departure clears the error', async () => {
+    await triggerScheduleConflict();
+
+    fireEvent.change(screen.getByLabelText('Heure de départ'), {
+      target: { value: '17:30' },
+    });
+
+    expect(screen.queryByText(/n'est plus disponible/)).not.toBeInTheDocument();
+  });
+
+  test('schedule conflict — form values are preserved', async () => {
+    await triggerScheduleConflict();
+
+    expect(screen.getByLabelText('Date')).toHaveValue('2026-05-13');
+    expect(screen.getByLabelText("Heure d'arrivée")).toHaveValue('08:30');
+    expect(screen.getByLabelText('Heure de départ')).toHaveValue('18:00');
+  });
+
+  // ── Parking conflict ───────────────────────────────────────────────────
+
+  test('parking conflict — shows error under parking section', async () => {
+    fetchTablePage.mockResolvedValue({ items: [], total: 8 });
+
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Enregistrer les modifications' }),
+    );
+
+    expect(
+      await screen.findByText(/Aucune place de stationnement Électrique/),
+    ).toBeInTheDocument();
+
+    expect(updateRecord).not.toHaveBeenCalled();
+  });
+
+  test('parking conflict — selected radio gets aria-invalid', async () => {
+    fetchTablePage.mockResolvedValue({ items: [], total: 8 });
+
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Enregistrer les modifications' }),
+    );
+
+    await screen.findByText(/Aucune place de stationnement/);
+
+    const elecRadio = screen.getByRole('radio', { name: /Électrique/ });
+    expect(elecRadio).toHaveAttribute('aria-invalid', 'true');
+    expect(elecRadio).toHaveAttribute('aria-errormessage', 'conflict-parking');
+  });
+
+  test('parking conflict — schedule fields NOT affected', async () => {
+    fetchTablePage.mockResolvedValue({ items: [], total: 8 });
+
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Enregistrer les modifications' }),
+    );
+
+    await screen.findByText(/Aucune place de stationnement/);
+
+    expect(screen.getByLabelText('Date')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByLabelText("Heure d'arrivée")).not.toHaveAttribute('aria-invalid');
+  });
+
+  test('parking conflict — changing parking clears the error', async () => {
+    fetchTablePage.mockResolvedValue({ items: [], total: 8 });
+
+    render(<WsbEditPage />);
+    await screen.findByRole('button', { name: 'Enregistrer les modifications' });
+
+    fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Enregistrer les modifications' }),
+    );
+
+    await screen.findByText(/Aucune place de stationnement/);
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Thermique' }));
+
+    expect(
+      screen.queryByText(/Aucune place de stationnement/),
+    ).not.toBeInTheDocument();
   });
 });

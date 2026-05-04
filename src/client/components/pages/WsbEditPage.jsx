@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { getRecord, updateRecord, fetchTablePage } from '../../services/ApiService.js';
 import { guardEditPage, navigateTo } from '../../services/NavigationService.js';
 import { getTomorrowISO, isWeekend } from '../../lib/dateUtils.js';
@@ -17,6 +17,8 @@ const PARKING_HINTS = {
   none:       'Votre réservation ne comprendra aucune place de stationnement.',
   electrique: '8 places électriques dans le parc.',
 };
+
+const PARKING_CAPACITY = { electrique: 8, thermique: 20 };
 
 const TYPE_LABELS = {
   'openspace-classique':  'Open Space classique',
@@ -157,7 +159,11 @@ export function WsbEditPage() {
   const [depart,  setDepart]  = useState('');
   const [parking, setParking] = useState('none');
   const [saving,  setSaving]  = useState(false);
+  const [conflictError, setConflictError] = useState(null);
+  const [parkingError,  setParkingError]  = useState(null);
   const { toast } = useToast();
+  const conflictRef    = useRef(null);
+  const parkingErrRef  = useRef(null);
   const minDate = useMemo(() => getTomorrowISO(), []);
   const errors  = useMemo(() => validateSchedule(date, arrival, depart), [date, arrival, depart]);
   const allFieldsFilled = date && arrival && depart;
@@ -182,6 +188,14 @@ export function WsbEditPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  useEffect(() => {
+    if (conflictError && conflictRef.current) conflictRef.current.focus();
+  }, [conflictError]);
+
+  useEffect(() => {
+    if (parkingError && parkingErrRef.current) parkingErrRef.current.focus();
+  }, [parkingError]);
+
   const handleSave = useCallback(async () => {
     if (!canSave || saving) return;
     setSaving(true);
@@ -198,7 +212,22 @@ export function WsbEditPage() {
           sysparm_fields: 'sys_id',
         });
         if (total > 0) {
-          toast.error('Ce créneau est déjà réservé. Veuillez choisir un autre horaire.');
+          setConflictError("Cet espace n'est plus disponible sur ce créneau. Veuillez choisir une autre date ou un autre horaire.");
+          setSaving(false);
+          return;
+        }
+      }
+
+      const parkingChanged = parking !== 'none' && parking !== booking.parking;
+      if (parkingChanged) {
+        const { total: bookedParking } = await fetchTablePage('sc_req_item', {
+          sysparm_query: `u_parking_space=${parking}^u_booking_date=${date}^u_arrival_time<${depart}^u_departure_time>${arrival}^sys_id!=${booking.sysId}`,
+          sysparm_limit: '1',
+          sysparm_fields: 'sys_id',
+        });
+        if (bookedParking >= PARKING_CAPACITY[parking]) {
+          const typeLabel = parking === 'electrique' ? 'Électrique' : 'Thermique';
+          setParkingError(`Aucune place de stationnement ${typeLabel} n'est disponible sur ce créneau.`);
           setSaving(false);
           return;
         }
@@ -245,6 +274,19 @@ export function WsbEditPage() {
       </div>
 
       <div className="wsb-edit__card">
+        {/* ── Conflict banner ──────────────────────────────────────────── */}
+        {conflictError && (
+          <div
+            id="conflict-schedule"
+            ref={conflictRef}
+            className="wsb-edit__conflict"
+            role="alert"
+            tabIndex={-1}
+          >
+            {conflictError}
+          </div>
+        )}
+
         {/* ── Horaires ─────────────────────────────────────────────────── */}
         <fieldset className="wsb-edit__fieldset">
           <legend className="wsb-edit__legend">Horaires</legend>
@@ -257,8 +299,10 @@ export function WsbEditPage() {
                 className="wsb-edit__input"
                 value={date}
                 min={minDate}
-                onChange={e => setDate(e.target.value)}
-                {...buildAriaError('date', errors.date)}
+                onChange={e => { setDate(e.target.value); setConflictError(null); }}
+                {...(conflictError
+                  ? { 'aria-invalid': 'true', 'aria-errormessage': 'conflict-schedule' }
+                  : buildAriaError('date', errors.date))}
               />
               <FormError fieldName="date" error={errors.date} />
             </div>
@@ -271,7 +315,10 @@ export function WsbEditPage() {
                 id="wsb-edit-arrival"
                 className="wsb-edit__input"
                 value={arrival}
-                onChange={e => setArrival(e.target.value)}
+                onChange={e => { setArrival(e.target.value); setConflictError(null); }}
+                {...(conflictError
+                  ? { 'aria-invalid': 'true', 'aria-errormessage': 'conflict-schedule' }
+                  : {})}
               />
             </div>
             <div className="wsb-edit__field">
@@ -283,8 +330,10 @@ export function WsbEditPage() {
                 id="wsb-edit-depart"
                 className="wsb-edit__input"
                 value={depart}
-                onChange={e => setDepart(e.target.value)}
-                {...buildAriaError('depart', errors.depart)}
+                onChange={e => { setDepart(e.target.value); setConflictError(null); }}
+                {...(conflictError
+                  ? { 'aria-invalid': 'true', 'aria-errormessage': 'conflict-schedule' }
+                  : buildAriaError('depart', errors.depart))}
               />
               <FormError fieldName="depart" error={errors.depart} />
             </div>
@@ -328,8 +377,10 @@ export function WsbEditPage() {
                   name="wsb-parking"
                   value={value}
                   checked={parking === value}
-                  onChange={() => setParking(value)}
+                  onChange={() => { setParking(value); setParkingError(null); }}
                   className="wsb-sr-only"
+                  aria-invalid={parkingError && parking === value ? 'true' : undefined}
+                  aria-errormessage={parkingError && parking === value ? 'conflict-parking' : undefined}
                 />
                 <span className="wsb-edit__radio-mark" aria-hidden="true" />
                 {label}
@@ -339,6 +390,17 @@ export function WsbEditPage() {
           {PARKING_HINTS[parking] && (
             <p className="wsb-edit__parking-hint" aria-live="polite">
               {PARKING_HINTS[parking]}
+            </p>
+          )}
+          {parkingError && (
+            <p
+              id="conflict-parking"
+              ref={parkingErrRef}
+              className="wsb-edit__conflict"
+              role="alert"
+              tabIndex={-1}
+            >
+              {parkingError}
             </p>
           )}
         </fieldset>
