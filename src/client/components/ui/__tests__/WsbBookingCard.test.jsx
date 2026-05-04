@@ -163,6 +163,36 @@ describe('WsbBookingCard — parking thermique', () => {
   });
 });
 
+// ── Status badge colors (AC: fond #00aa00 / #cc0000) ──────────────────────
+describe('WsbBookingCard — couleurs des badges de statut', () => {
+  it('le badge Disponible a la classe --available', () => {
+    const { container } = render(
+      <WsbBookingCard spaceId="B-001" sysId="s1" floor="Niveau 1" type="bureau" status="available" />
+    );
+    expect(container.querySelector('.wsb-booking-card__status--available')).toBeInTheDocument();
+  });
+
+  it('le badge Occupé a la classe --occupied', () => {
+    const { container } = render(
+      <WsbBookingCard spaceId="B-001" sysId="s1" floor="Niveau 1" type="bureau" status="occupied" />
+    );
+    expect(container.querySelector('.wsb-booking-card__status--occupied')).toBeInTheDocument();
+  });
+});
+
+// ── Occupied card — non-tabbable ──────────────────────────────────────────
+describe('WsbBookingCard — card occupée non tabbable', () => {
+  it('ne contient aucun élément interactif focusable', () => {
+    const { container } = render(
+      <WsbBookingCard spaceId="OS-007" sysId="s2" floor="RDC" type="openspace-classique" status="occupied" />
+    );
+    const focusable = container.querySelectorAll(
+      'button, a, input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    );
+    expect(focusable.length).toBe(0);
+  });
+});
+
 // ── Type badge inline styles ──────────────────────────────────────────────
 describe('WsbBookingCard — type badge styles', () => {
   it('applique la couleur rgba correcte pour bureau', () => {

@@ -1,0 +1,101 @@
+/* ── Select container ─────────────────────────────────────────────────── */
+.wsb-select {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--wsb-space-1);
+}
+
+.wsb-select__label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--wsb-color-text-secondary);
+}
+
+.wsb-select__required {
+  color: var(--wsb-color-primary);
+}
+
+/* ── Trigger button ──────────────────────────────────────────────────── */
+.wsb-select__trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: var(--wsb-space-3) var(--wsb-space-4);
+  background: var(--wsb-color-bg-elevated);
+  border: 1px solid var(--wsb-color-border);
+  border-radius: var(--wsb-radius-md);
+  color: var(--wsb-color-text-primary);
+  font-family: var(--wsb-font-family);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  min-height: 40px;
+  text-align: left;
+}
+
+.wsb-select__trigger:hover {
+  border-color: rgba(255, 255, 255, 0.20);
+}
+
+.wsb-select__trigger--open {
+  border-color: var(--wsb-color-primary);
+}
+
+.wsb-select__placeholder {
+  color: var(--wsb-color-text-muted);
+}
+
+.wsb-select__value {
+  color: var(--wsb-color-text-primary);
+}
+
+/* ── Chevron ─────────────────────────────────────────────────────────── */
+.wsb-select__trigger svg {
+  flex-shrink: 0;
+  color: var(--wsb-color-text-muted);
+  transition: transform 0.15s;
+}
+
+.wsb-select__trigger--open svg {
+  transform: rotate(180deg);
+}
+
+/* ── Dropdown listbox ────────────────────────────────────────────────── */
+.wsb-select__listbox {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  margin-top: var(--wsb-space-1);
+  padding: var(--wsb-space-1) 0;
+  background: var(--wsb-color-bg-elevated);
+  border: 1px solid var(--wsb-color-border);
+  border-radius: var(--wsb-radius-md);
+  box-shadow: var(--wsb-shadow-lg);
+  list-style: none;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ── Option ──────────────────────────────────────────────────────────── */
+.wsb-select__option {
+  padding: var(--wsb-space-2) var(--wsb-space-4);
+  font-size: 0.875rem;
+  color: var(--wsb-color-text-secondary);
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s;
+}
+
+.wsb-select__option:hover,
+.wsb-select__option--focused {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--wsb-color-text-primary);
+}
+
+.wsb-select__option--selected {
+  color: var(--wsb-color-primary);
+  font-weight: 500;
+}
