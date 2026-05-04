@@ -1,0 +1,21 @@
+.wsb-skip-link {
+  position: fixed;
+  top: -100%;
+  left: var(--wsb-space-4);
+  z-index: 2000;
+  padding: var(--wsb-space-3) var(--wsb-space-5);
+  background: var(--wsb-color-primary);
+  color: #ffffff;
+  font-family: var(--wsb-font-family);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0 0 var(--wsb-radius-md) var(--wsb-radius-md);
+  transition: top 0.15s ease;
+}
+
+.wsb-skip-link:focus {
+  top: 0;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}

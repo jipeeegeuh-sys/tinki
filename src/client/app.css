@@ -84,3 +84,44 @@
   white-space: nowrap;
   border: 0;
 }
+
+/* ── Focus visible global (WCAG 2.1 AA) ──────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid var(--wsb-color-primary);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--wsb-color-primary);
+  outline-offset: 0;
+  border-color: var(--wsb-color-primary);
+}
+
+/* ── Focus interne : suppression du focus non-visible ─────────────────── */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ── Main landmark accessible ─────────────────────────────────────────── */
+.wsb-main {
+  outline: none;
+}
+
+/* ── Erreur de formulaire ─────────────────────────────────────────────── */
+.wsb-form-error {
+  display: block;
+  margin-top: var(--wsb-space-1);
+  font-size: 0.8rem;
+  color: var(--wsb-color-danger);
+  line-height: 1.4;
+}
+
+[aria-invalid="true"] {
+  border-color: var(--wsb-color-danger) !important;
+}
+
+[aria-invalid="true"]:focus-visible {
+  outline-color: var(--wsb-color-danger);
+}
