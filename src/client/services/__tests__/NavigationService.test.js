@@ -13,8 +13,8 @@ import {
 } from '../NavigationService.js';
 
 describe('PAGES — constantes', () => {
-  test('contient les 5 pages attendues', () => {
-    expect(Object.keys(PAGES)).toEqual(['search', 'results', 'reservations', 'history', 'edit']);
+  test('contient les 6 pages attendues', () => {
+    expect(Object.keys(PAGES)).toEqual(['search', 'results', 'confirm', 'reservations', 'history', 'edit']);
   });
 
   test('chaque page est préfixée x_wsb_flexoffice_', () => {
@@ -37,6 +37,11 @@ describe('buildPageUrl', () => {
   test('ignore les params null ou vides', () => {
     const url = buildPageUrl('results', { type: 'bureau', floor: null, zone: '' });
     expect(url).toBe('x_wsb_flexoffice_results.do?type=bureau');
+  });
+
+  test('génère l\'URL de la page confirm avec space_id et params de recherche', () => {
+    const url = buildPageUrl('confirm', { space_id: '207-B', building: 'A', floor: '3', date: '2026-04-30', type: 'bureau' });
+    expect(url).toBe('x_wsb_flexoffice_confirm.do?space_id=207-B&building=A&floor=3&date=2026-04-30&type=bureau');
   });
 
   test('lance une erreur pour une page inconnue', () => {
@@ -211,6 +216,7 @@ describe('isKnownPage', () => {
   test('reconnaît les pages du scope avec .do', () => {
     expect(isKnownPage('x_wsb_flexoffice_search.do')).toBe(true);
     expect(isKnownPage('x_wsb_flexoffice_results.do')).toBe(true);
+    expect(isKnownPage('x_wsb_flexoffice_confirm.do')).toBe(true);
     expect(isKnownPage('x_wsb_flexoffice_reservations.do')).toBe(true);
     expect(isKnownPage('x_wsb_flexoffice_history.do')).toBe(true);
     expect(isKnownPage('x_wsb_flexoffice_edit.do')).toBe(true);

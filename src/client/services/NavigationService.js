@@ -1,6 +1,7 @@
 const PAGES = {
   search:       'x_wsb_flexoffice_search',
   results:      'x_wsb_flexoffice_results',
+  confirm:      'x_wsb_flexoffice_confirm',
   reservations: 'x_wsb_flexoffice_reservations',
   history:      'x_wsb_flexoffice_history',
   edit:         'x_wsb_flexoffice_edit',

@@ -128,7 +128,7 @@
   min-height: 44px;
 }
 
-.wsb-booking-card__cta:hover {
+.wsb-booking-card__cta:hover:not(:disabled) {
   background: #8a00e0;
   border-color: #8a00e0;
 }
@@ -136,6 +136,24 @@
 .wsb-booking-card__cta:focus-visible {
   outline: 2px solid #a100ff;
   outline-offset: 2px;
+}
+
+.wsb-booking-card__cta--loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+/* ── CTA Spinner ────────────────────────────────────────────────────────── */
+@keyframes wsb-cta-spin {
+  to { transform: rotate(360deg); }
+}
+
+.wsb-booking-card__cta-spinner {
+  animation: wsb-cta-spin 0.8s linear infinite;
 }
 
 .wsb-booking-card__unavailable {

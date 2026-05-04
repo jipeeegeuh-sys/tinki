@@ -6,18 +6,25 @@ import { WsbBookingCard, buildReserveUrl } from '../WsbBookingCard.jsx';
 // ── buildReserveUrl ───────────────────────────────────────────────────────
 describe('buildReserveUrl', () => {
   it('builds URL with only sysId', () => {
-    expect(buildReserveUrl('abc123', '')).toBe('/x_acf_wsb_confirm.do?space_id=abc123');
+    expect(buildReserveUrl('abc123', '')).toBe('/x_wsb_flexoffice_confirm.do?space_id=abc123');
   });
 
   it('appends searchParams when provided', () => {
     expect(buildReserveUrl('abc123', 'date=2026-05-04&floor=3')).toBe(
-      '/x_acf_wsb_confirm.do?space_id=abc123&date=2026-05-04&floor=3'
+      '/x_wsb_flexoffice_confirm.do?space_id=abc123&date=2026-05-04&floor=3'
     );
   });
 
   it('encodes special characters in sysId', () => {
     const url = buildReserveUrl('id with spaces', '');
     expect(url).toContain('id%20with%20spaces');
+  });
+
+  it('repropagates all search params in URL', () => {
+    const url = buildReserveUrl('207-B', 'building=A&floor=3&date=2026-04-30&type=bureau');
+    expect(url).toBe(
+      '/x_wsb_flexoffice_confirm.do?space_id=207-B&building=A&floor=3&date=2026-04-30&type=bureau'
+    );
   });
 });
 
@@ -75,7 +82,7 @@ describe('WsbBookingCard — disponible', () => {
     fireEvent.click(screen.getByRole('button', { name: /Réserver/ }));
     expect(onReserve).toHaveBeenCalledTimes(1);
     expect(onReserve).toHaveBeenCalledWith(
-      '/x_acf_wsb_confirm.do?space_id=sys001&date=2026-05-04'
+      '/x_wsb_flexoffice_confirm.do?space_id=sys001&date=2026-05-04'
     );
   });
 
@@ -83,7 +90,103 @@ describe('WsbBookingCard — disponible', () => {
     const onReserve = jest.fn();
     render(<WsbBookingCard {...baseProps} sysId="sys001" onReserve={onReserve} />);
     fireEvent.click(screen.getByRole('button', { name: /Réserver/ }));
-    expect(onReserve).toHaveBeenCalledWith('/x_acf_wsb_confirm.do?space_id=sys001');
+    expect(onReserve).toHaveBeenCalledWith('/x_wsb_flexoffice_confirm.do?space_id=sys001');
+  });
+});
+
+// ── Loading state on click ───────────────────────────────────────────────
+describe('WsbBookingCard — loading state', () => {
+  const baseProps = {
+    spaceId: 'B-042',
+    sysId: 'sys001',
+    floor: 'Étage 3',
+    type: 'bureau',
+    status: 'available',
+    onReserve: jest.fn(),
+  };
+
+  it('passe en état loading après clic', () => {
+    const { container } = render(<WsbBookingCard {...baseProps} />);
+    const btn = screen.getByRole('button', { name: /Réserver/ });
+
+    fireEvent.click(btn);
+
+    expect(btn).toHaveAttribute('aria-busy', 'true');
+    expect(btn).toBeDisabled();
+    expect(container.querySelector('.wsb-booking-card__cta--loading')).toBeInTheDocument();
+  });
+
+  it('affiche le spinner inline en loading', () => {
+    const { container } = render(<WsbBookingCard {...baseProps} />);
+    fireEvent.click(screen.getByRole('button', { name: /Réserver/ }));
+
+    expect(container.querySelector('.wsb-booking-card__cta-spinner')).toBeInTheDocument();
+  });
+
+  it('masque le texte visible et conserve un sr-only pendant loading', () => {
+    render(<WsbBookingCard {...baseProps} />);
+    fireEvent.click(screen.getByRole('button', { name: /Réserver/ }));
+
+    const srOnly = document.querySelector('.wsb-sr-only');
+    expect(srOnly).toBeInTheDocument();
+    expect(srOnly.textContent).toBe('Réserver cet espace');
+  });
+
+  it('ne déclenche pas un second appel onReserve si déjà en loading', () => {
+    const onReserve = jest.fn();
+    render(<WsbBookingCard {...baseProps} onReserve={onReserve} />);
+
+    const btn = screen.getByRole('button', { name: /Réserver/ });
+    fireEvent.click(btn);
+    fireEvent.click(btn);
+
+    expect(onReserve).toHaveBeenCalledTimes(1);
+  });
+
+  it('n\'a pas aria-busy avant le clic', () => {
+    render(<WsbBookingCard {...baseProps} />);
+    const btn = screen.getByRole('button', { name: /Réserver/ });
+    expect(btn).not.toHaveAttribute('aria-busy');
+    expect(btn).not.toBeDisabled();
+  });
+});
+
+// ── Keyboard navigation ─────────────────────────────────────────────────
+describe('WsbBookingCard — keyboard navigation', () => {
+  it('déclenche la réservation via Enter (natif button)', () => {
+    const onReserve = jest.fn();
+    render(
+      <WsbBookingCard
+        spaceId="207-B"
+        sysId="207-B"
+        floor="Étage 3"
+        type="bureau"
+        status="available"
+        searchParams="building=A&floor=3&date=2026-04-30&type=bureau"
+        onReserve={onReserve}
+      />
+    );
+    const btn = screen.getByRole('button', { name: /Réserver/ });
+    fireEvent.keyDown(btn, { key: 'Enter' });
+    fireEvent.click(btn);
+
+    expect(onReserve).toHaveBeenCalledWith(
+      '/x_wsb_flexoffice_confirm.do?space_id=207-B&building=A&floor=3&date=2026-04-30&type=bureau'
+    );
+  });
+
+  it('le bouton est focusable via Tab (type="button" natif)', () => {
+    render(
+      <WsbBookingCard
+        spaceId="B-001"
+        sysId="s1"
+        floor="Étage 1"
+        type="bureau"
+        status="available"
+      />
+    );
+    const btn = screen.getByRole('button', { name: /Réserver/ });
+    expect(btn.tabIndex).not.toBe(-1);
   });
 });
 

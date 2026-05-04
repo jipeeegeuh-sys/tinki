@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './WsbBookingCard.css';
 
 const TYPE_CONFIG = {
@@ -18,8 +19,31 @@ const LightningIcon = () => (
   </svg>
 );
 
+const CtaSpinner = () => (
+  <svg
+    className="wsb-booking-card__cta-spinner"
+    width="16"
+    height="16"
+    viewBox="0 0 16 16"
+    fill="none"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <circle
+      cx="8"
+      cy="8"
+      r="6"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeDasharray="28"
+      strokeDashoffset="10"
+    />
+  </svg>
+);
+
 export function buildReserveUrl(sysId, searchParams) {
-  const base = `/x_acf_wsb_confirm.do?space_id=${encodeURIComponent(sysId)}`;
+  const base = `/x_wsb_flexoffice_confirm.do?space_id=${encodeURIComponent(sysId)}`;
   return searchParams ? `${base}&${searchParams}` : base;
 }
 
@@ -34,8 +58,12 @@ export function WsbBookingCard({
 }) {
   const cfg = TYPE_CONFIG[type] ?? DEFAULT_CONFIG;
   const isAvailable = status === 'available';
+  const [loading, setLoading] = useState(false);
 
   const handleReserve = () => {
+    if (loading) return;
+    setLoading(true);
+
     const url = buildReserveUrl(sysId, searchParams);
     if (onReserve) {
       onReserve(url);
@@ -82,11 +110,20 @@ export function WsbBookingCard({
         {isAvailable ? (
           <button
             type="button"
-            className="wsb-booking-card__cta"
+            className={`wsb-booking-card__cta${loading ? ' wsb-booking-card__cta--loading' : ''}`}
             aria-label={`Réserver espace ${cfg.label} ${spaceId}, ${floor}`}
+            aria-busy={loading ? 'true' : undefined}
+            disabled={loading}
             onClick={handleReserve}
           >
-            Réserver cet espace
+            {loading ? (
+              <>
+                <CtaSpinner />
+                <span className="wsb-sr-only">Réserver cet espace</span>
+              </>
+            ) : (
+              'Réserver cet espace'
+            )}
           </button>
         ) : (
           <span className="wsb-booking-card__unavailable">Indisponible</span>
