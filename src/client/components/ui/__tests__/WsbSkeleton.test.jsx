@@ -41,9 +41,9 @@ describe('WsbGridSkeleton', () => {
     expect(container.firstChild).toHaveAttribute('aria-busy', 'true');
   });
 
-  it('has aria-label "Chargement en cours"', () => {
+  it('has aria-label "Chargement des espaces disponibles"', () => {
     const { container } = render(<WsbGridSkeleton />);
-    expect(container.firstChild).toHaveAttribute('aria-label', 'Chargement en cours');
+    expect(container.firstChild).toHaveAttribute('aria-label', 'Chargement des espaces disponibles');
   });
 });
 

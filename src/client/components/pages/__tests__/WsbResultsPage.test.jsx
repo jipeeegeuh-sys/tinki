@@ -59,7 +59,7 @@ beforeEach(() => {
 describe('WsbResultsPage — chargement et squelettes', () => {
   test('affiche 6 skeleton cards immédiatement au montage', () => {
     render(<WsbResultsPage />);
-    const skeletonGrid = screen.getByLabelText('Chargement en cours');
+    const skeletonGrid = screen.getByLabelText('Chargement des espaces disponibles');
     expect(skeletonGrid).toHaveAttribute('aria-busy', 'true');
   });
 
@@ -98,7 +98,7 @@ describe('WsbResultsPage — succès API', () => {
   test('les skeletons disparaissent après le chargement', async () => {
     render(<WsbResultsPage />);
     await waitFor(() => {
-      expect(screen.queryByLabelText('Chargement en cours')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Chargement des espaces disponibles')).not.toBeInTheDocument();
     });
   });
 
@@ -155,8 +155,30 @@ describe('WsbResultsPage — zéro résultat', () => {
     getAvailableSpaces.mockResolvedValue([]);
     render(<WsbResultsPage />);
     await waitFor(() => {
-      expect(screen.queryByLabelText('Chargement en cours')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Chargement des espaces disponibles')).not.toBeInTheDocument();
     });
+  });
+});
+
+describe('WsbResultsPage — tous occupés (pas d\'état vide)', () => {
+  beforeEach(() => { getAvailableSpaces.mockResolvedValue(ALL_OCCUPIED_SPACES); });
+
+  test('affiche les cards même si toutes sont occupées', async () => {
+    render(<WsbResultsPage />);
+    await waitFor(() => expect(screen.getByText('A-101')).toBeInTheDocument());
+    expect(screen.getByText('A-102')).toBeInTheDocument();
+    expect(screen.getByText('A-103')).toBeInTheDocument();
+  });
+
+  test('n\'affiche PAS l\'état vide quand toutes les places sont occupées', async () => {
+    render(<WsbResultsPage />);
+    await waitFor(() => expect(screen.getByText('A-101')).toBeInTheDocument());
+    expect(screen.queryByText('Aucun espace disponible')).not.toBeInTheDocument();
+  });
+
+  test('affiche "0 places disponibles" dans le titre', async () => {
+    render(<WsbResultsPage />);
+    await waitFor(() => expect(screen.getByText('0 places disponibles')).toBeInTheDocument());
   });
 });
 
@@ -184,7 +206,7 @@ describe('WsbResultsPage — timeout et erreurs', () => {
     getAvailableSpaces.mockRejectedValue(new ApiError(500, 'Internal Server Error'));
     render(<WsbResultsPage />);
     await waitFor(() => {
-      expect(screen.queryByLabelText('Chargement en cours')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Chargement des espaces disponibles')).not.toBeInTheDocument();
     });
   });
 
