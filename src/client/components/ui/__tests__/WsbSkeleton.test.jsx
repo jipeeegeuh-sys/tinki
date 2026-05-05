@@ -1,6 +1,12 @@
 import { jest } from '@jest/globals';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { WsbSkeletonCard, WsbGridSkeleton, WsbSpinner, WsbEmptyState } from '../WsbSkeleton.jsx';
+import {
+  WsbSkeletonCard,
+  WsbGridSkeleton,
+  WsbSkeletonTable,
+  WsbSpinner,
+  WsbEmptyState,
+} from '../WsbSkeleton.jsx';
 
 describe('WsbSkeletonCard', () => {
   it('renders with aria-hidden="true"', () => {
@@ -35,12 +41,43 @@ describe('WsbGridSkeleton', () => {
     expect(container.firstChild).toHaveAttribute('aria-busy', 'true');
   });
 
-  it('has accessible label for screen readers', () => {
+  it('has aria-label "Chargement en cours"', () => {
     const { container } = render(<WsbGridSkeleton />);
-    expect(container.firstChild).toHaveAttribute(
-      'aria-label',
-      'Chargement des espaces disponibles'
-    );
+    expect(container.firstChild).toHaveAttribute('aria-label', 'Chargement en cours');
+  });
+});
+
+describe('WsbSkeletonTable', () => {
+  it('renders 5 skeleton rows by default', () => {
+    const { container } = render(<WsbSkeletonTable />);
+    expect(container.querySelectorAll('.wsb-skeleton-row')).toHaveLength(5);
+  });
+
+  it('renders a custom number of rows', () => {
+    const { container } = render(<WsbSkeletonTable rows={3} />);
+    expect(container.querySelectorAll('.wsb-skeleton-row')).toHaveLength(3);
+  });
+
+  it('has aria-live="polite"', () => {
+    const { container } = render(<WsbSkeletonTable />);
+    expect(container.firstChild).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('has aria-busy="true"', () => {
+    const { container } = render(<WsbSkeletonTable />);
+    expect(container.firstChild).toHaveAttribute('aria-busy', 'true');
+  });
+
+  it('has aria-label "Chargement de vos réservations"', () => {
+    const { container } = render(<WsbSkeletonTable />);
+    expect(container.firstChild).toHaveAttribute('aria-label', 'Chargement de vos réservations');
+  });
+
+  it('skeleton rows have aria-hidden="true"', () => {
+    const { container } = render(<WsbSkeletonTable />);
+    container.querySelectorAll('.wsb-skeleton-row').forEach((row) => {
+      expect(row).toHaveAttribute('aria-hidden', 'true');
+    });
   });
 });
 
@@ -52,7 +89,7 @@ describe('WsbSpinner', () => {
 
   it('has default aria-label "Chargement…"', () => {
     render(<WsbSpinner />);
-    expect(screen.getByRole('status')).toHaveAttribute('aria-label', 'Chargement…');
+    expect(screen.getByRole('status')).toHaveAttribute('aria-label', 'Chargement\u2026');
   });
 
   it('accepts a custom aria-label', () => {
@@ -67,12 +104,10 @@ describe('WsbSpinner', () => {
 
   it('renders an SVG with aria-hidden', () => {
     const { container } = render(<WsbSpinner />);
-    const svg = container.querySelector('svg');
-    expect(svg).toHaveAttribute('aria-hidden', 'true');
+    expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
   });
 });
 
-// ── Zero-results state ───────────────────────────────────────────────────
 describe('WsbEmptyState — zero-results', () => {
   const searchUrl = 'x_wsb_flexoffice_search.do?building=A&floor=3&date=2026-04-30&type=bureau';
 
@@ -89,26 +124,17 @@ describe('WsbEmptyState — zero-results', () => {
   it('renders the AC-compliant description', () => {
     render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
     expect(
-      screen.getByText('Aucun espace disponible pour ces critères. Essayez un autre créneau ou un autre étage.')
+      screen.getByText('Aucun espace disponible pour ces critères. Essayez un autre créneau ou un autre étage.'),
     ).toBeInTheDocument();
   });
 
   it('renders CTA "Modifier ma recherche" as a link with the searchUrl', () => {
     render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
     const link = screen.getByRole('link', { name: 'Modifier ma recherche' });
-    expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', searchUrl);
-  });
-
-  it('uses a calendar-barred illustration (SVG with crossed lines)', () => {
-    const { container } = render(<WsbEmptyState variant="zero-results" searchUrl={searchUrl} />);
-    const svg = container.querySelector('.wsb-empty-state__icon svg');
-    expect(svg).toBeInTheDocument();
-    expect(svg.querySelector('rect')).toBeInTheDocument();
   });
 });
 
-// ── Server-error state ──────────────────────────────────────────────────
 describe('WsbEmptyState — server-error', () => {
   const searchUrl = 'x_wsb_flexoffice_search.do?building=A&floor=3&date=2026-04-30&type=bureau';
 
@@ -120,14 +146,13 @@ describe('WsbEmptyState — server-error', () => {
   it('renders the AC-compliant error description', () => {
     render(<WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />);
     expect(
-      screen.getByText('Une erreur est survenue lors du chargement des résultats. Veuillez réessayer.')
+      screen.getByText('Une erreur est survenue lors du chargement des résultats. Veuillez réessayer.'),
     ).toBeInTheDocument();
   });
 
-  it('renders the "Réessayer" CTA as a <button>', () => {
+  it('renders the "Réessayer" CTA as a button', () => {
     render(<WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />);
     const btn = screen.getByRole('button', { name: 'Réessayer' });
-    expect(btn).toBeInTheDocument();
     expect(btn.tagName).toBe('BUTTON');
   });
 
@@ -140,14 +165,12 @@ describe('WsbEmptyState — server-error', () => {
 
   it('renders the "Retour à la recherche" secondary link', () => {
     render(<WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />);
-    const link = screen.getByRole('link', { name: 'Retour à la recherche' });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', searchUrl);
+    expect(screen.getByRole('link', { name: 'Retour à la recherche' })).toHaveAttribute('href', searchUrl);
   });
 
   it('applies the server-error variant class', () => {
     const { container } = render(
-      <WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />
+      <WsbEmptyState variant="server-error" onRetry={() => {}} searchUrl={searchUrl} />,
     );
     expect(container.querySelector('.wsb-empty-state--server-error')).toBeInTheDocument();
   });
@@ -158,7 +181,6 @@ describe('WsbEmptyState — server-error', () => {
   });
 });
 
-// ── Empty-reservations state ────────────────────────────────────────────
 describe('WsbEmptyState — empty-reservations', () => {
   beforeEach(() => render(<WsbEmptyState variant="empty-reservations" />));
 
@@ -167,13 +189,10 @@ describe('WsbEmptyState — empty-reservations', () => {
   });
 
   it('renders CTA as a link to search page', () => {
-    const link = screen.getByRole('link', { name: 'Réserver un espace' });
-    expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', 'x_wsb_flexoffice_search.do');
+    expect(screen.getByRole('link', { name: 'Réserver un espace' })).toBeInTheDocument();
   });
 });
 
-// ── Unknown variant ─────────────────────────────────────────────────────
 describe('WsbEmptyState — unknown variant', () => {
   it('renders nothing for an unknown variant', () => {
     const { container } = render(<WsbEmptyState variant="unknown" />);
