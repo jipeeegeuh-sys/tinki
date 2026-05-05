@@ -184,20 +184,21 @@ export function WsbConfirmPage() {
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const { space_id, building, floor, date, type, car, parking } = guard.params;
+  const { space_id, sys_id, building, floor, date, type, car, parking } = guard.params;
   const needsParking = car === 'true' && Boolean(parking);
 
   const loadSpace = useCallback(async () => {
     if (!guard.valid) return;
     setStatus('loading');
     try {
-      const result = await getRecord('x_wsb_flex_space', space_id);
+      const lookupId = sys_id || space_id;
+      const result = await getRecord('x_wsb_flex_space', lookupId);
       setSpace(result);
       setStatus('success');
     } catch {
       setStatus('error');
     }
-  }, [guard, space_id]);
+  }, [guard, sys_id, space_id]);
 
   useEffect(() => { loadSpace(); }, [loadSpace]);
 

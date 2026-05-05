@@ -5,26 +5,33 @@ import { WsbBookingCard, buildReserveUrl } from '../WsbBookingCard.jsx';
 
 // ── buildReserveUrl ───────────────────────────────────────────────────────
 describe('buildReserveUrl', () => {
-  it('builds URL with only sysId', () => {
-    expect(buildReserveUrl('abc123', '')).toBe('/x_wsb_flexoffice_confirm.do?space_id=abc123');
+  it('builds URL with spaceId and sysId', () => {
+    const url = buildReserveUrl('B-042', 'guid-abc', '');
+    expect(url).toContain('space_id=B-042');
+    expect(url).toContain('sys_id=guid-abc');
   });
 
   it('appends searchParams when provided', () => {
-    expect(buildReserveUrl('abc123', 'date=2026-05-04&floor=3')).toBe(
-      '/x_wsb_flexoffice_confirm.do?space_id=abc123&date=2026-05-04&floor=3'
-    );
+    const url = buildReserveUrl('B-042', 'guid-abc', 'date=2026-05-04&floor=3');
+    expect(url).toContain('space_id=B-042');
+    expect(url).toContain('sys_id=guid-abc');
+    expect(url).toContain('date=2026-05-04');
+    expect(url).toContain('floor=3');
   });
 
-  it('encodes special characters in sysId', () => {
-    const url = buildReserveUrl('id with spaces', '');
-    expect(url).toContain('id%20with%20spaces');
+  it('encodes special characters in spaceId', () => {
+    const url = buildReserveUrl('id with spaces', 'guid', '');
+    expect(url).toContain('id+with+spaces');
   });
 
-  it('repropagates all search params in URL', () => {
-    const url = buildReserveUrl('207-B', 'building=A&floor=3&date=2026-04-30&type=bureau');
-    expect(url).toBe(
-      '/x_wsb_flexoffice_confirm.do?space_id=207-B&building=A&floor=3&date=2026-04-30&type=bureau'
-    );
+  it('repropagates all search params in URL (AC-compliant)', () => {
+    const url = buildReserveUrl('207-B', 'guid-207', 'building=A&floor=3&date=2026-04-30&type=bureau');
+    expect(url).toContain('space_id=207-B');
+    expect(url).toContain('sys_id=guid-207');
+    expect(url).toContain('building=A');
+    expect(url).toContain('floor=3');
+    expect(url).toContain('date=2026-04-30');
+    expect(url).toContain('type=bureau');
   });
 });
 
@@ -76,21 +83,24 @@ describe('WsbBookingCard — disponible', () => {
     expect(container.firstChild).not.toHaveClass('wsb-booking-card--occupied');
   });
 
-  it('appelle onReserve avec la bonne URL au clic', () => {
+  it('appelle onReserve avec space_id=spaceId et sys_id=sysId au clic', () => {
     const onReserve = jest.fn();
     render(<WsbBookingCard {...baseProps} sysId="sys001" searchParams="date=2026-05-04" onReserve={onReserve} />);
     fireEvent.click(screen.getByRole('button', { name: /Réserver/ }));
     expect(onReserve).toHaveBeenCalledTimes(1);
-    expect(onReserve).toHaveBeenCalledWith(
-      '/x_wsb_flexoffice_confirm.do?space_id=sys001&date=2026-05-04'
-    );
+    const url = onReserve.mock.calls[0][0];
+    expect(url).toContain('space_id=B-042');
+    expect(url).toContain('sys_id=sys001');
+    expect(url).toContain('date=2026-05-04');
   });
 
   it('appelle onReserve sans searchParams', () => {
     const onReserve = jest.fn();
     render(<WsbBookingCard {...baseProps} sysId="sys001" onReserve={onReserve} />);
     fireEvent.click(screen.getByRole('button', { name: /Réserver/ }));
-    expect(onReserve).toHaveBeenCalledWith('/x_wsb_flexoffice_confirm.do?space_id=sys001');
+    const url = onReserve.mock.calls[0][0];
+    expect(url).toContain('space_id=B-042');
+    expect(url).toContain('sys_id=sys001');
   });
 });
 
@@ -158,7 +168,7 @@ describe('WsbBookingCard — keyboard navigation', () => {
     render(
       <WsbBookingCard
         spaceId="207-B"
-        sysId="207-B"
+        sysId="guid-207"
         floor="Étage 3"
         type="bureau"
         status="available"
@@ -170,9 +180,13 @@ describe('WsbBookingCard — keyboard navigation', () => {
     fireEvent.keyDown(btn, { key: 'Enter' });
     fireEvent.click(btn);
 
-    expect(onReserve).toHaveBeenCalledWith(
-      '/x_wsb_flexoffice_confirm.do?space_id=207-B&building=A&floor=3&date=2026-04-30&type=bureau'
-    );
+    const url = onReserve.mock.calls[0][0];
+    expect(url).toContain('space_id=207-B');
+    expect(url).toContain('sys_id=guid-207');
+    expect(url).toContain('building=A');
+    expect(url).toContain('floor=3');
+    expect(url).toContain('date=2026-04-30');
+    expect(url).toContain('type=bureau');
   });
 
   it('le bouton est focusable via Tab (type="button" natif)', () => {

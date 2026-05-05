@@ -43,11 +43,11 @@ const CtaSpinner = () => (
   </svg>
 );
 
-export function buildReserveUrl(sysId, searchParams) {
+export function buildReserveUrl(spaceId, sysId, searchParams) {
   const parsed = new URLSearchParams(searchParams);
   parsed.delete('route');
   const params = Object.fromEntries(parsed);
-  return buildPageUrl('confirm', { ...params, space_id: sysId });
+  return buildPageUrl('confirm', { ...params, space_id: spaceId, sys_id: sysId });
 }
 
 export function WsbBookingCard({
@@ -67,7 +67,7 @@ export function WsbBookingCard({
     if (loading) return;
     setLoading(true);
 
-    const url = buildReserveUrl(sysId, searchParams);
+    const url = buildReserveUrl(spaceId, sysId, searchParams);
     if (onReserve) {
       onReserve(url);
     } else {
