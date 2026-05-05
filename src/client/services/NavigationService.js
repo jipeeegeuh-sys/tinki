@@ -3,12 +3,14 @@ const SPA_ENDPOINT = 'x_wsb_flex_main.do';
 const ROUTE_MAP = {
   search:       '',
   results:      'resultats',
+  confirm:      'confirmation',
   reservations: 'mes-reservations',
   history:      'historique',
   edit:         'edition',
 };
 
 const RESULTS_REQUIRED_PARAMS = ['building', 'floor', 'date', 'type'];
+const CONFIRM_REQUIRED_PARAMS = ['space_id', 'building', 'floor', 'date', 'type'];
 
 export function buildPageUrl(page, params = {}) {
   const route = ROUTE_MAP[page];
@@ -56,6 +58,16 @@ export function navigateTo(page, params = {}) {
 export function guardResultsPage() {
   const params = getCurrentParams();
   const missing = RESULTS_REQUIRED_PARAMS.filter((k) => !params[k]);
+  if (missing.length > 0) {
+    navigateTo('search');
+    return { valid: false, missing, params: {} };
+  }
+  return { valid: true, missing: [], params };
+}
+
+export function guardConfirmPage() {
+  const params = getCurrentParams();
+  const missing = CONFIRM_REQUIRED_PARAMS.filter((k) => !params[k]);
   if (missing.length > 0) {
     navigateTo('search');
     return { valid: false, missing, params: {} };

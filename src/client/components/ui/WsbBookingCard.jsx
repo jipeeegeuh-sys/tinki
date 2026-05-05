@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { buildPageUrl } from '../../services/NavigationService.js';
 import './WsbBookingCard.css';
 
 const TYPE_CONFIG = {
@@ -43,8 +44,10 @@ const CtaSpinner = () => (
 );
 
 export function buildReserveUrl(sysId, searchParams) {
-  const base = `/x_wsb_flexoffice_confirm.do?space_id=${encodeURIComponent(sysId)}`;
-  return searchParams ? `${base}&${searchParams}` : base;
+  const parsed = new URLSearchParams(searchParams);
+  parsed.delete('route');
+  const params = Object.fromEntries(parsed);
+  return buildPageUrl('confirm', { ...params, space_id: sysId });
 }
 
 export function WsbBookingCard({

@@ -8,6 +8,7 @@ import { WsbSearchPage } from './components/pages/WsbSearchPage.jsx';
 import { WsbResultsPage } from './components/pages/WsbResultsPage.jsx';
 import { WsbHistoryPage } from './components/pages/WsbHistoryPage.jsx';
 import { WsbEditPage } from './components/pages/WsbEditPage.jsx';
+import { WsbConfirmPage } from './components/pages/WsbConfirmPage.jsx';
 import { WsbReservationsPage } from './components/pages/WsbReservationsPage.jsx';
 import { Wsb404Page } from './components/pages/Wsb404Page.jsx';
 import {
@@ -30,6 +31,13 @@ const PAGE_CONFIG = {
     breadcrumb: [
       { label: 'Accueil', href: buildPageUrl('search') },
       { label: 'Résultats de recherche' },
+    ],
+  },
+  confirm: {
+    breadcrumb: [
+      { label: 'Accueil', href: buildPageUrl('search') },
+      { label: 'Résultats', href: buildPageUrl('results') },
+      { label: 'Confirmation' },
     ],
   },
   reservations: {
@@ -63,6 +71,7 @@ function PageContent({ page }) {
   switch (page) {
     case 'search':       return <WsbSearchPage />;
     case 'results':      return <WsbResultsPage />;
+    case 'confirm':      return <WsbConfirmPage />;
     case 'reservations': return <WsbReservationsPage />;
     case 'history':      return <WsbHistoryPage />;
     case 'edit':         return <WsbEditPage />;
