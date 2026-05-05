@@ -18,7 +18,7 @@ import {
 } from './services/NavigationService.js';
 
 const SESSION_CHECK_URL =
-  '/api/now/table/sys_user?sysparm_limit=1&sysparm_fields=sys_id';
+  '/api/now/table/sys_user?sysparm_query=user_name=javascript:gs.getUserName()&sysparm_limit=1&sysparm_fields=sys_id,name,first_name,last_name,user_name,roles';
 
 const PAGE_CONFIG = {
   search: {
@@ -100,9 +100,32 @@ function SessionExpiredBanner() {
   );
 }
 
+function buildInitials(firstName, lastName, fullName) {
+  if (firstName && lastName) {
+    return `${firstName[0]}${lastName[0]}`.toUpperCase();
+  }
+  if (fullName) {
+    const parts = fullName.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    return fullName.slice(0, 2).toUpperCase();
+  }
+  return '??';
+}
+
+function extractPrimaryRole(rolesStr) {
+  if (!rolesStr) return 'Collaborateur';
+  const roles = rolesStr.split(',').map((r) => r.trim());
+  if (roles.includes('admin')) return 'Administrateur';
+  if (roles.includes('itil')) return 'Agent ITIL';
+  return 'Collaborateur';
+}
+
+const DEFAULT_USER = { initials: '??', fullName: '', role: 'Collaborateur' };
+
 export default function App() {
   const [authStatus, setAuthStatus] = useState('loading');
   const [currentPage, setCurrentPage] = useState(() => resolveCurrentPage());
+  const [userData, setUserData] = useState(DEFAULT_USER);
   const mainRef = useRef(null);
 
   useEffect(() => {
@@ -126,6 +149,19 @@ export default function App() {
           }, 3000);
         } else {
           setAuthStatus('ok');
+          try {
+            const json = await res.json();
+            const record = json?.result?.[0];
+            if (record && !cancelled) {
+              setUserData({
+                initials: buildInitials(record.first_name, record.last_name, record.name),
+                fullName: record.name || record.user_name || '',
+                role: extractPrimaryRole(record.roles),
+              });
+            }
+          } catch {
+            /* user data fallback to default */
+          }
         }
       } catch {
         if (!cancelled) setAuthStatus('ok');
@@ -168,7 +204,7 @@ export default function App() {
         <WsbHeader
           activePage={currentPage || 'search'}
           breadcrumb={config?.breadcrumb || []}
-          user={{ initials: 'JD', fullName: 'Jean Dupont', role: 'Collaborateur' }}
+          user={userData}
         />
         <main
           ref={mainRef}

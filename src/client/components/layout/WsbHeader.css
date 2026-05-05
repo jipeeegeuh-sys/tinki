@@ -204,6 +204,21 @@
   font-weight: 500;
 }
 
+.wsb-sidebar__link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.wsb-sidebar__link--active .wsb-sidebar__link-icon {
+  opacity: 1;
+  color: var(--wsb-color-primary);
+}
+
 /* ── Bottom user block ────────────────────────────────────────────────── */
 .wsb-sidebar__bottom {
   flex-shrink: 0;

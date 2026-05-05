@@ -9,10 +9,33 @@ const SearchIcon = () => (
   </svg>
 );
 
+const CalendarIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <rect x="1.5" y="2.5" width="13" height="11" rx="1.5" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M1.5 6h13" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M5 1v3M11 1v3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+  </svg>
+);
+
+const ClockIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="6.2" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M8 4.5V8l2.5 2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const HelpIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+    <circle cx="8" cy="8" r="6.2" stroke="currentColor" strokeWidth="1.4" />
+    <path d="M6 6.2a2 2 0 0 1 3.9.6c0 1.2-1.9 1.2-1.9 2.4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+    <circle cx="8" cy="11.5" r="0.7" fill="currentColor" />
+  </svg>
+);
+
 const NAV_ITEMS = [
   { key: 'search', label: 'Rechercher une place', icon: SearchIcon, page: 'search' },
-  { key: 'reservations', label: 'Mes réservations', icon: null, page: 'reservations' },
-  { key: 'history', label: 'Historique', icon: null, page: 'history' },
+  { key: 'reservations', label: 'Mes réservations', icon: CalendarIcon, page: 'reservations' },
+  { key: 'history', label: 'Historique', icon: ClockIcon, page: 'history' },
 ];
 
 const FlexDeskLogo = () => (
@@ -69,7 +92,7 @@ export function WsbHeader({
           <FlexDeskLogo />
           <div className="wsb-sidebar__section-label">NAVIGATION</div>
           <ul className="wsb-sidebar__nav" role="list">
-            {NAV_ITEMS.map(({ key, label, page }) => {
+            {NAV_ITEMS.map(({ key, label, icon: Icon, page }) => {
               const active = activePage === key;
               return (
                 <li key={key}>
@@ -78,6 +101,7 @@ export function WsbHeader({
                     className={`wsb-sidebar__link${active ? ' wsb-sidebar__link--active' : ''}`}
                     aria-current={active ? 'page' : undefined}
                   >
+                    {Icon && <span className="wsb-sidebar__link-icon"><Icon /></span>}
                     {label}
                   </a>
                 </li>
@@ -87,7 +111,10 @@ export function WsbHeader({
           <div className="wsb-sidebar__section-label">RESSOURCES</div>
           <ul className="wsb-sidebar__nav" role="list">
             <li>
-              <a href="/kb" className="wsb-sidebar__link">Aide &amp; Support</a>
+              <a href="/$knowledge.do" className="wsb-sidebar__link">
+                <span className="wsb-sidebar__link-icon"><HelpIcon /></span>
+                Aide
+              </a>
             </li>
           </ul>
         </div>
