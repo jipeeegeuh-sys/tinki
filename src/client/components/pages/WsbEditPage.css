@@ -49,6 +49,7 @@
   color: var(--wsb-color-text-primary);
   margin: 0 0 var(--wsb-space-2) 0;
   line-height: 1.2;
+  outline: none;
 }
 
 .wsb-edit__subtitle {
@@ -253,6 +254,41 @@
 .wsb-edit__conflict:focus {
   outline: 2px solid var(--wsb-color-danger);
   outline-offset: 2px;
+}
+
+/* ── Parking current info ──────────────────────────────────────────────── */
+.wsb-edit__parking-current {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--wsb-color-text-primary);
+  margin: 0 0 var(--wsb-space-3) 0;
+  padding: var(--wsb-space-2) var(--wsb-space-3);
+  background: var(--wsb-color-bg-elevated);
+  border: 1px solid var(--wsb-color-border);
+  border-radius: var(--wsb-radius-md);
+}
+
+.wsb-edit__parking-current--none {
+  color: var(--wsb-color-text-muted);
+  font-weight: 400;
+  font-style: italic;
+}
+
+/* ── Parking type sub-selector ────────────────────────────────────────── */
+.wsb-edit__parking-type {
+  margin-top: var(--wsb-space-3);
+  padding-top: var(--wsb-space-3);
+  border-top: 1px dashed var(--wsb-color-border);
+}
+
+.wsb-edit__parking-sublabel {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--wsb-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: var(--wsb-space-2);
 }
 
 /* ── Parking hint ───────────────────────────────────────────────────────── */

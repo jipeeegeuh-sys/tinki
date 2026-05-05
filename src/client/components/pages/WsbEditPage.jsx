@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { getRecord, updateRecord, fetchTablePage } from '../../services/ApiService.js';
+import { getRecord, updateRecord, createRecord, fetchTablePage } from '../../services/ApiService.js';
 import { guardEditPage, navigateTo, buildPageUrl } from '../../services/NavigationService.js';
 import { getTomorrowISO, isWeekend } from '../../lib/dateUtils.js';
 import { buildAriaError, FormError } from '../../lib/useFocusError.js';
@@ -7,27 +7,12 @@ import { useToast } from '../../lib/useToast.js';
 import { WsbButton } from '../ui/WsbButton.jsx';
 import './WsbEditPage.css';
 
-const PARKING_OPTIONS = [
-  { value: 'none',       label: 'Aucun parking' },
-  { value: 'thermique',  label: 'Thermique' },
-  { value: 'electrique', label: 'Électrique (⚡)' },
-];
-
-const PARKING_HINTS = {
-  none:       'Votre réservation ne comprendra aucune place de stationnement.',
-  electrique: '8 places électriques dans le parc.',
-};
-
-const PARKING_CAPACITY = { electrique: 8, thermique: 20 };
-
 const TYPE_LABELS = {
   'openspace-classique':  'Open Space classique',
   'openspace-specialise': 'Open Space spécialisé',
   'bureau':               'Bureau',
   'phonebox':             'Phone Box',
   'meetingroom':          'Meeting Room',
-  'parking-electrique':   'Parking Électrique',
-  'parking-thermique':    'Parking Thermique',
 };
 
 const FLOOR_LABELS = {
@@ -35,6 +20,14 @@ const FLOOR_LABELS = {
   '4': '4e étage', '5': '5e étage',
   'ss': 'Sous-sol', '-1': 'Sous-sol',
 };
+
+const PARKING_TYPE_OPTIONS = [
+  { value: 'thermique', label: 'Thermique 🚗' },
+  { value: 'electric',  label: 'Électrique ⚡' },
+];
+
+const PARKING_TYPE_LABELS = { thermique: 'Thermique', electric: 'Électrique' };
+const PARKING_CAPACITY = { electric: 8, thermique: 20 };
 
 function normalizeTime(val) {
   return val ? String(val).slice(0, 5) : '';
@@ -54,8 +47,10 @@ function validateSchedule(date, arrival, depart) {
 function parseBooking(raw) {
   let extra = {};
   try { extra = JSON.parse(raw.short_description); } catch { /* text fallback */ }
+  const ref = raw.request;
   return {
     sysId:         raw.sys_id,
+    requestId:     typeof ref === 'object' ? ref.value : ref,
     number:        raw.number || '',
     spaceId:       extra.spaceId  || raw.u_space_id || '—',
     type:          extra.type     || '—',
@@ -63,11 +58,8 @@ function parseBooking(raw) {
     date:          raw.u_booking_date  || extra.date  || raw.opened_at?.slice(0, 10) || '',
     arrivalTime:   normalizeTime(raw.u_arrival_time   || extra.start),
     departureTime: normalizeTime(raw.u_departure_time || extra.end),
-    parking:       raw.u_parking_space || 'none',
   };
 }
-
-// ── Skeleton ──────────────────────────────────────────────────────────────────
 
 function SkeletonField() {
   return <div className="wsb-skeleton wsb-edit__skeleton-field" aria-hidden="true" />;
@@ -122,8 +114,6 @@ function SkeletonEditForm() {
   );
 }
 
-// ── Error state ───────────────────────────────────────────────────────────────
-
 const WarningIcon = () => (
   <svg width="48" height="48" viewBox="0 0 48 48" fill="none" aria-hidden="true">
     <path d="M24 5L45 41H3L24 5Z" stroke="var(--wsb-color-warning)" strokeWidth="2.5"
@@ -144,7 +134,7 @@ function ErrorState({ onRetry }) {
         </p>
         <div className="wsb-edit__error-actions">
           <WsbButton variant="primary" onClick={onRetry}>Réessayer</WsbButton>
-          <a href="x_wsb_flexoffice_reservations.do" className="wsb-edit__error-link">
+          <a href={buildPageUrl('reservations')} className="wsb-edit__error-link">
             ← Mes réservations
           </a>
         </div>
@@ -153,26 +143,58 @@ function ErrorState({ onRetry }) {
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+function RadioOption({ name, value, checked, onChange, label, error }) {
+  return (
+    <label className={`wsb-edit__radio-label${checked ? ' wsb-edit__radio-label--checked' : ''}`}>
+      <input
+        type="radio"
+        name={name}
+        value={value}
+        checked={checked}
+        onChange={onChange}
+        className="wsb-sr-only"
+        aria-invalid={error ? 'true' : undefined}
+      />
+      <span className="wsb-edit__radio-mark" aria-hidden="true" />
+      {label}
+    </label>
+  );
+}
 
 export function WsbEditPage() {
-  const [guard]   = useState(() => guardEditPage());
-  const [status,  setStatus]  = useState('loading');
-  const [booking, setBooking] = useState(null);
-  const [date,    setDate]    = useState('');
-  const [arrival, setArrival] = useState('');
-  const [depart,  setDepart]  = useState('');
-  const [parking, setParking] = useState('none');
-  const [saving,  setSaving]  = useState(false);
+  const [guard]            = useState(() => guardEditPage());
+  const [status, setStatus]             = useState('loading');
+  const [booking, setBooking]           = useState(null);
+  const [existingParking, setExistingParking] = useState(null);
+  const [date, setDate]                 = useState('');
+  const [arrival, setArrival]           = useState('');
+  const [depart, setDepart]             = useState('');
+  const [parkingMode, setParkingMode]   = useState('keep');
+  const [parkingType, setParkingType]   = useState('thermique');
+  const [saving, setSaving]             = useState(false);
   const [conflictError, setConflictError] = useState(null);
-  const [parkingError,  setParkingError]  = useState(null);
-  const { toast } = useToast();
-  const conflictRef    = useRef(null);
-  const parkingErrRef  = useRef(null);
-  const minDate = useMemo(() => getTomorrowISO(), []);
-  const errors  = useMemo(() => validateSchedule(date, arrival, depart), [date, arrival, depart]);
-  const allFieldsFilled = date && arrival && depart;
-  const canSave = allFieldsFilled && Object.keys(errors).length === 0;
+  const [parkingError, setParkingError]   = useState(null);
+  const { toast }        = useToast();
+  const conflictRef      = useRef(null);
+  const parkingErrRef    = useRef(null);
+  const minDate          = useMemo(() => getTomorrowISO(), []);
+  const errors           = useMemo(() => validateSchedule(date, arrival, depart), [date, arrival, depart]);
+  const allFieldsFilled  = date && arrival && depart;
+  const needsParkingType = parkingMode === 'add' || parkingMode === 'change';
+  const canSave          = allFieldsFilled && Object.keys(errors).length === 0
+                           && (!needsParkingType || parkingType);
+
+  const hasParking = existingParking !== null;
+  const parkingModes = hasParking
+    ? [
+        { value: 'keep',   label: 'Conserver' },
+        { value: 'change', label: 'Modifier' },
+        { value: 'remove', label: 'Supprimer' },
+      ]
+    : [
+        { value: 'keep', label: 'Conserver' },
+        { value: 'add',  label: 'Ajouter' },
+      ];
 
   const load = useCallback(async () => {
     if (!guard.valid) return;
@@ -184,7 +206,20 @@ export function WsbEditPage() {
       setDate(parsed.date);
       setArrival(parsed.arrivalTime);
       setDepart(parsed.departureTime);
-      setParking(parsed.parking);
+
+      if (parsed.requestId) {
+        const { items } = await fetchTablePage('sc_req_item', {
+          sysparm_query: `request=${parsed.requestId}^sys_id!=${parsed.sysId}^state!=4^u_parking_space!=none`,
+          sysparm_limit: '1',
+          sysparm_fields: 'sys_id,u_parking_space',
+        });
+        if (items.length > 0) {
+          const item = items[0];
+          setExistingParking({ sysId: item.sys_id, type: item.u_parking_space });
+          setParkingType(item.u_parking_space);
+        }
+      }
+
       setStatus('success');
     } catch {
       setStatus('error');
@@ -204,6 +239,9 @@ export function WsbEditPage() {
   const handleSave = useCallback(async () => {
     if (!canSave || saving) return;
     setSaving(true);
+    setConflictError(null);
+    setParkingError(null);
+
     try {
       const scheduleChanged =
         date !== booking.date ||
@@ -212,33 +250,36 @@ export function WsbEditPage() {
 
       if (scheduleChanged) {
         const { total } = await fetchTablePage('sc_req_item', {
-          sysparm_query: `u_space_id=${booking.spaceId}^u_booking_date=${date}^u_arrival_time<${depart}^u_departure_time>${arrival}^sys_id!=${booking.sysId}`,
+          sysparm_query: `u_space_id=${booking.spaceId}^u_booking_date=${date}^u_arrival_time<${depart}^u_departure_time>${arrival}^sys_id!=${booking.sysId}^state!=4`,
           sysparm_limit: '1',
           sysparm_fields: 'sys_id',
         });
         if (total > 0) {
-          setConflictError("Cet espace n'est plus disponible sur ce créneau. Veuillez choisir une autre date ou un autre horaire.");
+          setConflictError("Cet espace n'est plus disponible sur ce créneau. Veuillez choisir un autre horaire.");
           setSaving(false);
           return;
         }
       }
 
-      const parkingChanged = parking !== 'none' && parking !== booking.parking;
-      if (parkingChanged) {
+      if (needsParkingType) {
         const { total: bookedParking } = await fetchTablePage('sc_req_item', {
-          sysparm_query: `u_parking_space=${parking}^u_booking_date=${date}^u_arrival_time<${depart}^u_departure_time>${arrival}^sys_id!=${booking.sysId}`,
+          sysparm_query: `u_parking_space=${parkingType}^u_booking_date=${date}^u_arrival_time<${depart}^u_departure_time>${arrival}^sys_id!=${booking.sysId}^state!=4`,
           sysparm_limit: '1',
           sysparm_fields: 'sys_id',
         });
-        if (bookedParking >= PARKING_CAPACITY[parking]) {
-          const typeLabel = parking === 'electrique' ? 'Électrique' : 'Thermique';
-          setParkingError(`Aucune place de stationnement ${typeLabel} n'est disponible sur ce créneau.`);
+        if (bookedParking >= PARKING_CAPACITY[parkingType]) {
+          const label = PARKING_TYPE_LABELS[parkingType] || parkingType;
+          setParkingError(`Aucune place ${label} n'est disponible sur ce créneau.`);
           setSaving(false);
           return;
         }
       }
 
-      await updateRecord('sc_req_item', booking.sysId, {
+      let newParkingValue;
+      if (parkingMode === 'add' || parkingMode === 'change') newParkingValue = parkingType;
+      if (parkingMode === 'remove') newParkingValue = 'none';
+
+      const updateBody = {
         short_description: JSON.stringify({
           spaceId: booking.spaceId,
           type: booking.type,
@@ -250,23 +291,49 @@ export function WsbEditPage() {
         u_booking_date: date,
         u_arrival_time: arrival,
         u_departure_time: depart,
-        u_parking_space: parking,
-      });
+      };
+      if (newParkingValue !== undefined) {
+        updateBody.u_parking_space = newParkingValue;
+      }
+      await updateRecord('sc_req_item', booking.sysId, updateBody);
 
-      toast.success('Votre réservation a bien été modifiée.');
+      if (parkingMode === 'remove' && existingParking) {
+        await updateRecord('sc_req_item', existingParking.sysId, { state: '4' });
+      } else if (parkingMode === 'add' || (parkingMode === 'change' && existingParking)) {
+        if (parkingMode === 'change') {
+          await updateRecord('sc_req_item', existingParking.sysId, { state: '4' });
+        }
+        const fullType = parkingType === 'electric' ? 'parking-electrique' : 'parking-thermique';
+        await createRecord('sc_req_item', {
+          request: booking.requestId,
+          state: '1',
+          short_description: JSON.stringify({
+            type: fullType,
+            date,
+            start: arrival,
+            end: depart,
+          }),
+          u_booking_date: date,
+          u_arrival_time: arrival,
+          u_departure_time: depart,
+          u_parking_space: parkingType,
+        });
+      }
+
+      toast.success('Réservation mise à jour !');
       navigateTo('reservations');
     } catch {
       toast.error('Une erreur est survenue. Veuillez réessayer.');
       setSaving(false);
     }
-  }, [canSave, saving, date, arrival, depart, parking, booking, toast]);
+  }, [canSave, saving, date, arrival, depart, parkingMode, parkingType, needsParkingType, booking, existingParking, toast]);
 
   if (!guard.valid)         return null;
   if (status === 'loading') return <SkeletonEditForm />;
   if (status === 'error')   return <ErrorState onRetry={load} />;
 
-  const typeLabel  = TYPE_LABELS[booking.type]    || booking.type;
-  const floorLabel = FLOOR_LABELS[booking.floor]  || booking.floor;
+  const typeLabel  = TYPE_LABELS[booking.type]   || booking.type;
+  const floorLabel = FLOOR_LABELS[booking.floor] || booking.floor;
 
   return (
     <div className="wsb-edit">
@@ -277,14 +344,13 @@ export function WsbEditPage() {
       </nav>
       <div className="wsb-edit__header">
         <span className="wsb-edit__badge">ÉDITION</span>
-        <h1 className="wsb-edit__title">Modifier ma réservation</h1>
+        <h1 className="wsb-edit__title" tabIndex={-1}>Modifier ma réservation</h1>
         {booking.number && (
           <p className="wsb-edit__subtitle">Réservation #{booking.number}</p>
         )}
       </div>
 
       <div className="wsb-edit__card">
-        {/* ── Conflict banner ──────────────────────────────────────────── */}
         {conflictError && (
           <div
             id="conflict-schedule"
@@ -297,7 +363,6 @@ export function WsbEditPage() {
           </div>
         )}
 
-        {/* ── Horaires ─────────────────────────────────────────────────── */}
         <fieldset className="wsb-edit__fieldset">
           <legend className="wsb-edit__legend">Horaires</legend>
           <div className="wsb-edit__fields-row">
@@ -318,7 +383,7 @@ export function WsbEditPage() {
             </div>
             <div className="wsb-edit__field">
               <label htmlFor="wsb-edit-arrival" className="wsb-edit__label">
-                Heure d'arrivée
+                Heure d&apos;arrivée
               </label>
               <input
                 type="time"
@@ -350,7 +415,6 @@ export function WsbEditPage() {
           </div>
         </fieldset>
 
-        {/* ── Espace de travail (non-éditable) ─────────────────────────── */}
         <div className="wsb-edit__workspace">
           <h2 className="wsb-edit__workspace-title">Espace de travail</h2>
           <div className="wsb-edit__workspace-info">
@@ -368,40 +432,63 @@ export function WsbEditPage() {
             </div>
           </div>
           <p className="wsb-edit__workspace-note">
-            La place réservée ne peut pas être modifiée. Pour changer d'espace,
+            La place réservée ne peut pas être modifiée. Pour changer d&apos;espace,
             annulez cette réservation et effectuez une nouvelle recherche.
           </p>
         </div>
 
-        {/* ── Stationnement ─────────────────────────────────────────────── */}
         <fieldset className="wsb-edit__fieldset">
           <legend className="wsb-edit__legend">Place de stationnement</legend>
-          <div className="wsb-edit__radios" role="radiogroup" aria-label="Type de stationnement souhaité">
-            {PARKING_OPTIONS.map(({ value, label }) => (
-              <label
-                key={value}
-                className={`wsb-edit__radio-label${parking === value ? ' wsb-edit__radio-label--checked' : ''}`}
-              >
-                <input
-                  type="radio"
-                  name="wsb-parking"
-                  value={value}
-                  checked={parking === value}
-                  onChange={() => { setParking(value); setParkingError(null); }}
-                  className="wsb-sr-only"
-                  aria-invalid={parkingError && parking === value ? 'true' : undefined}
-                  aria-errormessage={parkingError && parking === value ? 'conflict-parking' : undefined}
-                />
-                <span className="wsb-edit__radio-mark" aria-hidden="true" />
-                {label}
-              </label>
-            ))}
-          </div>
-          {PARKING_HINTS[parking] && (
-            <p className="wsb-edit__parking-hint" aria-live="polite">
-              {PARKING_HINTS[parking]}
+
+          {hasParking ? (
+            <p className="wsb-edit__parking-current">
+              Stationnement actuel : {PARKING_TYPE_LABELS[existingParking.type] || existingParking.type}
+              {existingParking.type === 'electric' ? ' ⚡' : ' 🚗'}
+            </p>
+          ) : (
+            <p className="wsb-edit__parking-current wsb-edit__parking-current--none">
+              Aucun stationnement associé à cette réservation.
             </p>
           )}
+
+          <div className="wsb-edit__radios" role="radiogroup" aria-label="Gestion du parking">
+            {parkingModes.map(({ value, label }) => (
+              <RadioOption
+                key={value}
+                name="wsb-parking-mode"
+                value={value}
+                checked={parkingMode === value}
+                onChange={() => { setParkingMode(value); setParkingError(null); }}
+                label={label}
+              />
+            ))}
+          </div>
+
+          {needsParkingType && (
+            <div className="wsb-edit__parking-type">
+              <span className="wsb-edit__parking-sublabel">Type de place</span>
+              <div className="wsb-edit__radios" role="radiogroup" aria-label="Type de stationnement">
+                {PARKING_TYPE_OPTIONS.map(({ value, label }) => (
+                  <RadioOption
+                    key={value}
+                    name="wsb-parking-type"
+                    value={value}
+                    checked={parkingType === value}
+                    onChange={() => { setParkingType(value); setParkingError(null); }}
+                    label={label}
+                    error={parkingError}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {parkingMode === 'remove' && (
+            <p className="wsb-edit__parking-hint" aria-live="polite">
+              La place de stationnement sera supprimée de cette réservation.
+            </p>
+          )}
+
           {parkingError && (
             <p
               id="conflict-parking"
@@ -415,7 +502,6 @@ export function WsbEditPage() {
           )}
         </fieldset>
 
-        {/* ── Actions ──────────────────────────────────────────────────── */}
         <div className="wsb-edit__actions">
           <WsbButton variant="primary" disabled={!canSave} loading={saving} onClick={handleSave}>
             {saving ? 'Enregistrement en cours…' : 'Enregistrer les modifications'}
