@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { WsbSelect } from '../ui/WsbSelect.jsx';
 import { WsbButton } from '../ui/WsbButton.jsx';
 import { WsbParkingFieldset } from '../ui/WsbParkingFieldset.jsx';
@@ -85,6 +85,12 @@ export function WsbSearchPage() {
     date: useRef(null),
     type: useRef(null),
   };
+
+  useEffect(() => {
+    if (urlParams.building && urlParams.floor && urlParams.date && urlParams.type) {
+      fieldRefs.building.current?.focus();
+    }
+  }, []);
 
   const focusFirstError = useCallback((errs) => {
     for (const field of FIELD_ORDER) {

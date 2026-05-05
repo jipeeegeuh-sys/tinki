@@ -35,6 +35,26 @@ export function WsbGridSkeleton({ count = 6 }) {
   );
 }
 
+export function WsbSkeletonTable({ rows = 5 }) {
+  return (
+    <div
+      className="wsb-skeleton-table"
+      aria-live="polite"
+      aria-busy="true"
+      aria-label="Chargement de vos réservations"
+    >
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="wsb-skeleton-row" aria-hidden="true">
+          <div className="wsb-skeleton wsb-skeleton--line wsb-skeleton--line-sm" />
+          <div className="wsb-skeleton wsb-skeleton--line wsb-skeleton--line-md" />
+          <div className="wsb-skeleton wsb-skeleton--line wsb-skeleton--line-sm" />
+          <div className="wsb-skeleton wsb-skeleton--line wsb-skeleton--line-sm" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 const SIZES = { sm: 24, md: 32, lg: 48 };
 
 export function WsbSpinner({ size = 'md', label = 'Chargement…', className = '' }) {

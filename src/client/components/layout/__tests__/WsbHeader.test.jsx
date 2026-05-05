@@ -80,9 +80,9 @@ describe('WsbHeader — sidebar navigation', () => {
     expect(historyLink).not.toHaveAttribute('aria-current');
   });
 
-  test('affiche le lien Aide & Support dans les ressources', () => {
+  test('affiche le lien Aide dans les ressources', () => {
     renderHeader();
-    expect(screen.getByText('Aide & Support')).toBeInTheDocument();
+    expect(screen.getByText('Aide')).toBeInTheDocument();
   });
 });
 

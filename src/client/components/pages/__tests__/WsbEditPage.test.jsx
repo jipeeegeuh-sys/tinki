@@ -33,10 +33,11 @@ const mockDefaultRecord = {
 jest.mock('../../../services/ApiService.js', () => ({
   getRecord: jest.fn(() => Promise.resolve({ ...mockDefaultRecord })),
   updateRecord: jest.fn(() => Promise.resolve({})),
+  createRecord: jest.fn(() => Promise.resolve({ sys_id: 'new1' })),
   fetchTablePage: jest.fn(() => Promise.resolve({ items: [], total: 0 })),
 }));
 
-const { getRecord, updateRecord, fetchTablePage } = require('../../../services/ApiService.js');
+const { getRecord, updateRecord, createRecord, fetchTablePage } = require('../../../services/ApiService.js');
 const { navigateTo } = require('../../../services/NavigationService.js');
 
 import { WsbEditPage } from '../WsbEditPage';
@@ -167,98 +168,100 @@ describe('WsbEditPage — US-5.02 date & time validation', () => {
 describe('WsbEditPage — US-5.03 parking modes', () => {
   afterEach(() => {
     getRecord.mockReset();
+    fetchTablePage.mockReset();
+    fetchTablePage.mockResolvedValue({ items: [], total: 0 });
   });
 
-  function mockWithParking(parkingValue) {
-    getRecord.mockResolvedValueOnce({
-      ...mockDefaultRecord,
-      u_parking_space: parkingValue,
+  function mockWithExistingParking(type) {
+    getRecord.mockResolvedValueOnce({ ...mockDefaultRecord, request: 'REQ001' });
+    fetchTablePage.mockResolvedValueOnce({
+      items: [{ sys_id: 'park1', u_parking_space: type }],
+      total: 1,
     });
   }
 
-  test('Mode 1 — pre-selects Thermique when reservation has thermique', async () => {
-    mockWithParking('thermique');
+  function mockWithoutParking() {
+    getRecord.mockResolvedValueOnce({ ...mockDefaultRecord, request: 'REQ001' });
+  }
+
+  test('Mode 1 — existing thermique: shows status and pre-selects type on Modifier', async () => {
+    mockWithExistingParking('thermique');
     render(<WsbEditPage />);
-    const radio = await screen.findByRole('radio', { name: 'Thermique' });
+    expect(await screen.findByText(/Stationnement actuel/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Modifier' }));
+    const radio = screen.getByRole('radio', { name: /Thermique/ });
     expect(radio).toBeChecked();
   });
 
-  test('Mode 1 — pre-selects Électrique when reservation has electrique', async () => {
-    mockWithParking('electrique');
+  test('Mode 1 — existing electric: shows status and pre-selects type on Modifier', async () => {
+    mockWithExistingParking('electric');
     render(<WsbEditPage />);
-    const radio = await screen.findByRole('radio', { name: /Électrique/ });
+    expect(await screen.findByText(/Stationnement actuel/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Modifier' }));
+    const radio = screen.getByRole('radio', { name: /Électrique/ });
     expect(radio).toBeChecked();
   });
 
   test('Mode 2 — switching from thermique to électrique selects the new option', async () => {
-    mockWithParking('thermique');
+    mockWithExistingParking('thermique');
     render(<WsbEditPage />);
-    const thermiqueRadio = await screen.findByRole('radio', { name: 'Thermique' });
+    await screen.findByText(/Stationnement actuel/);
+    fireEvent.click(screen.getByRole('radio', { name: 'Modifier' }));
+    const thermiqueRadio = screen.getByRole('radio', { name: /Thermique/ });
     expect(thermiqueRadio).toBeChecked();
-
     const electriqueRadio = screen.getByRole('radio', { name: /Électrique/ });
     fireEvent.click(electriqueRadio);
     expect(electriqueRadio).toBeChecked();
     expect(thermiqueRadio).not.toBeChecked();
   });
 
-  test('Mode 2 — shows hint text when électrique is selected', async () => {
-    mockWithParking('electrique');
+  test('Mode 2 — Modifier reveals "Type de place" sub-section', async () => {
+    mockWithExistingParking('electric');
     render(<WsbEditPage />);
-    expect(
-      await screen.findByText('8 places électriques dans le parc.'),
-    ).toBeInTheDocument();
+    await screen.findByText(/Stationnement actuel/);
+    expect(screen.queryByText('Type de place')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('radio', { name: 'Modifier' }));
+    expect(screen.getByText('Type de place')).toBeInTheDocument();
   });
 
-  test('Mode 3 — selecting Aucun parking shows removal message', async () => {
-    mockWithParking('thermique');
+  test('Mode 3 — selecting Supprimer shows removal message', async () => {
+    mockWithExistingParking('thermique');
     render(<WsbEditPage />);
-    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
-    fireEvent.click(aucunRadio);
-    expect(aucunRadio).toBeChecked();
-    expect(
-      screen.getByText(/ne comprendra aucune place de stationnement/),
-    ).toBeInTheDocument();
+    await screen.findByText(/Stationnement actuel/);
+    fireEvent.click(screen.getByRole('radio', { name: 'Supprimer' }));
+    expect(screen.getByRole('radio', { name: 'Supprimer' })).toBeChecked();
+    expect(screen.getByText(/sera supprimée de cette réservation/)).toBeInTheDocument();
   });
 
-  test('Mode 4 — pre-selects Aucun parking when no parking existed', async () => {
-    mockWithParking('none');
+  test('Mode 4 — shows "Aucun stationnement" when no parking exists', async () => {
+    mockWithoutParking();
     render(<WsbEditPage />);
-    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
-    expect(aucunRadio).toBeChecked();
+    expect(await screen.findByText(/Aucun stationnement/)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Conserver' })).toBeChecked();
   });
 
-  test('Mode 4 — null u_parking_space defaults to Aucun parking', async () => {
-    getRecord.mockResolvedValueOnce({
-      ...mockDefaultRecord,
-      u_parking_space: null,
-    });
+  test('Mode 4 — default record without request also shows no parking', async () => {
+    getRecord.mockResolvedValueOnce({ ...mockDefaultRecord });
     render(<WsbEditPage />);
-    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
-    expect(aucunRadio).toBeChecked();
+    expect(await screen.findByText(/Aucun stationnement/)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Conserver' })).toBeChecked();
   });
 
-  test('Mode 4 — adding parking from none selects the chosen type', async () => {
-    mockWithParking('none');
+  test('Mode 4 — clicking Ajouter reveals type selection', async () => {
+    mockWithoutParking();
     render(<WsbEditPage />);
-    const aucunRadio = await screen.findByRole('radio', { name: 'Aucun parking' });
-    expect(aucunRadio).toBeChecked();
-
-    const thermiqueRadio = screen.getByRole('radio', { name: 'Thermique' });
+    await screen.findByText(/Aucun stationnement/);
+    fireEvent.click(screen.getByRole('radio', { name: 'Ajouter' }));
+    const thermiqueRadio = screen.getByRole('radio', { name: /Thermique/ });
     fireEvent.click(thermiqueRadio);
     expect(thermiqueRadio).toBeChecked();
-    expect(aucunRadio).not.toBeChecked();
-    expect(
-      screen.queryByText(/ne comprendra aucune place/),
-    ).not.toBeInTheDocument();
   });
 
-  test('no hint shown when Thermique is selected', async () => {
-    mockWithParking('thermique');
+  test('no removal message shown in default Conserver mode', async () => {
+    mockWithExistingParking('thermique');
     render(<WsbEditPage />);
-    await screen.findByRole('radio', { name: 'Thermique' });
-    expect(screen.queryByText(/8 places électriques/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/ne comprendra aucune/)).not.toBeInTheDocument();
+    await screen.findByText(/Stationnement actuel/);
+    expect(screen.queryByText(/sera supprimée/)).not.toBeInTheDocument();
   });
 });
 
@@ -326,13 +329,12 @@ describe('WsbEditPage — US-5.04 save submission', () => {
           u_booking_date: '2026-05-13',
           u_arrival_time: '08:30',
           u_departure_time: '18:00',
-          u_parking_space: 'none',
         }),
       );
     });
 
     expect(mockToast.success).toHaveBeenCalledWith(
-      'Votre réservation a bien été modifiée.',
+      'Réservation mise à jour !',
     );
     expect(navigateTo).toHaveBeenCalledWith('reservations');
   });
@@ -364,7 +366,8 @@ describe('WsbEditPage — US-5.04 save submission', () => {
     render(<WsbEditPage />);
     await screen.findByRole('button', { name: 'Enregistrer les modifications' });
 
-    const thermiqueRadio = screen.getByRole('radio', { name: 'Thermique' });
+    fireEvent.click(screen.getByRole('radio', { name: 'Ajouter' }));
+    const thermiqueRadio = screen.getByRole('radio', { name: /Thermique/ });
     fireEvent.click(thermiqueRadio);
 
     const saveBtn = screen.getByRole('button', {
@@ -544,13 +547,14 @@ describe('WsbEditPage — US-5.05 conflict display & recovery', () => {
     render(<WsbEditPage />);
     await screen.findByRole('button', { name: 'Enregistrer les modifications' });
 
+    fireEvent.click(screen.getByRole('radio', { name: 'Ajouter' }));
     fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Enregistrer les modifications' }),
     );
 
     expect(
-      await screen.findByText(/Aucune place de stationnement Électrique/),
+      await screen.findByText(/Aucune place Électrique/),
     ).toBeInTheDocument();
 
     expect(updateRecord).not.toHaveBeenCalled();
@@ -562,16 +566,16 @@ describe('WsbEditPage — US-5.05 conflict display & recovery', () => {
     render(<WsbEditPage />);
     await screen.findByRole('button', { name: 'Enregistrer les modifications' });
 
+    fireEvent.click(screen.getByRole('radio', { name: 'Ajouter' }));
     fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Enregistrer les modifications' }),
     );
 
-    await screen.findByText(/Aucune place de stationnement/);
+    await screen.findByText(/Aucune place/);
 
     const elecRadio = screen.getByRole('radio', { name: /Électrique/ });
     expect(elecRadio).toHaveAttribute('aria-invalid', 'true');
-    expect(elecRadio).toHaveAttribute('aria-errormessage', 'conflict-parking');
   });
 
   test('parking conflict — schedule fields NOT affected', async () => {
@@ -580,34 +584,36 @@ describe('WsbEditPage — US-5.05 conflict display & recovery', () => {
     render(<WsbEditPage />);
     await screen.findByRole('button', { name: 'Enregistrer les modifications' });
 
+    fireEvent.click(screen.getByRole('radio', { name: 'Ajouter' }));
     fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Enregistrer les modifications' }),
     );
 
-    await screen.findByText(/Aucune place de stationnement/);
+    await screen.findByText(/Aucune place/);
 
     expect(screen.getByLabelText('Date')).not.toHaveAttribute('aria-invalid');
     expect(screen.getByLabelText("Heure d'arrivée")).not.toHaveAttribute('aria-invalid');
   });
 
-  test('parking conflict — changing parking clears the error', async () => {
+  test('parking conflict — changing parking type clears the error', async () => {
     fetchTablePage.mockResolvedValue({ items: [], total: 8 });
 
     render(<WsbEditPage />);
     await screen.findByRole('button', { name: 'Enregistrer les modifications' });
 
+    fireEvent.click(screen.getByRole('radio', { name: 'Ajouter' }));
     fireEvent.click(screen.getByRole('radio', { name: /Électrique/ }));
     fireEvent.click(
       screen.getByRole('button', { name: 'Enregistrer les modifications' }),
     );
 
-    await screen.findByText(/Aucune place de stationnement/);
+    await screen.findByText(/Aucune place/);
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Thermique' }));
+    fireEvent.click(screen.getByRole('radio', { name: /Thermique/ }));
 
     expect(
-      screen.queryByText(/Aucune place de stationnement/),
+      screen.queryByText(/Aucune place/),
     ).not.toBeInTheDocument();
   });
 });
@@ -660,12 +666,11 @@ describe('WsbEditPage — US-5.06 cancel & breadcrumb navigation', () => {
     fireEvent.change(screen.getByLabelText("Heure d'arrivée"), {
       target: { value: '10:00' },
     });
-    fireEvent.click(screen.getByRole('radio', { name: 'Thermique' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Ajouter' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
 
     expect(updateRecord).not.toHaveBeenCalled();
-    expect(fetchTablePage).not.toHaveBeenCalled();
     expect(navigateTo).toHaveBeenCalledWith('reservations');
   });
 

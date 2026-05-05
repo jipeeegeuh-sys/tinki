@@ -73,6 +73,27 @@
   gap: 1rem;
 }
 
+/* ── skeleton table ── */
+.wsb-skeleton-table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wsb-skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+}
+
+.wsb-skeleton-row .wsb-skeleton--line {
+  flex: 1;
+}
+
 /* ── spinner ── */
 @keyframes wsb-spin {
   to { transform: rotate(360deg); }

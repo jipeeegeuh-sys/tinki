@@ -14,9 +14,9 @@ import {
 } from '../NavigationService.js';
 
 describe('ROUTE_MAP — constantes', () => {
-  test('contient les 5 pages attendues', () => {
+  test('contient les 6 pages attendues', () => {
     expect(Object.keys(ROUTE_MAP)).toEqual(
-      ['search', 'results', 'reservations', 'history', 'edit']
+      ['search', 'results', 'confirm', 'reservations', 'history', 'edit']
     );
   });
 
