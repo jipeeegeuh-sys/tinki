@@ -1,6 +1,5 @@
 {
-  "scope": "s_acf_tinkitest",
-  "scopeId": "00000000-0000-0000-0000-000000000000",
-  "name": "App Test Tinkerer",
-  "instanceUrl": "https://accenturefrancedemo1.service-now.com"
+  "scope": "x_acf_tinkitest",
+  "scopeId": "00000000000000000000000000000000",
+  "name": "App Test Tinkerer"
 }
