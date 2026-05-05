@@ -20,6 +20,7 @@ export function buildPageUrl(page, params = {}) {
   if (route) qs.set('route', route);
 
   for (const [key, val] of Object.entries(params)) {
+    if (key === 'route') continue;
     if (val != null && val !== '') qs.set(key, val);
   }
 

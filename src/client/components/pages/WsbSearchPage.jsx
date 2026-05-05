@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { WsbSelect } from '../ui/WsbSelect.jsx';
 import { WsbButton } from '../ui/WsbButton.jsx';
 import { WsbParkingFieldset } from '../ui/WsbParkingFieldset.jsx';
@@ -78,9 +78,6 @@ export function WsbSearchPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isFormComplete = Boolean(building && floor && date && spaceType);
-  const isPreFilled = Boolean(
-    urlParams.building && urlParams.floor && urlParams.date && urlParams.type
-  );
 
   const fieldRefs = {
     building: useRef(null),
@@ -98,12 +95,6 @@ export function WsbSearchPage() {
           return;
         }
       }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (isPreFilled && fieldRefs.building.current) {
-      fieldRefs.building.current.focus();
     }
   }, []);
 
@@ -162,7 +153,7 @@ export function WsbSearchPage() {
     <div className="wsb-search-page">
       <div className="wsb-search-page__header">
         <span className="wsb-search-page__badge">RÉSERVATION</span>
-        <h1 className="wsb-search-page__title">Rechercher un espace de travail</h1>
+        <h1 className="wsb-search-page__title" tabIndex={-1}>Rechercher un espace de travail</h1>
         <p className="wsb-search-page__subtitle">
           Sélectionnez vos critères pour trouver un espace de travail ou une
           place de parking disponible.

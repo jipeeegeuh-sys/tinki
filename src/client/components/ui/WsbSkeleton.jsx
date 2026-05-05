@@ -1,3 +1,4 @@
+import { useRef, useEffect } from 'react';
 import './WsbSkeleton.css';
 
 export function WsbSkeletonCard() {
@@ -108,12 +109,18 @@ const CONFIGS = {
     title: 'Aucune réservation',
     description: "Vous n'avez pas encore de réservation. Réservez un espace de travail dès maintenant.",
     ctaLabel: 'Réserver un espace',
-    ctaHref: 'x_wsb_flexoffice_search.do',
+    ctaHref: 'x_wsb_flex_main.do',
   },
 };
 
 export function WsbEmptyState({ variant, onRetry, searchUrl }) {
+  const ctaRef = useRef(null);
   const config = CONFIGS[variant];
+
+  useEffect(() => {
+    ctaRef.current?.focus();
+  }, []);
+
   if (!config) return null;
   const { Icon, title, description, ctaLabel, ctaHref, secondaryLabel } = config;
   const isServerError = variant === 'server-error';
@@ -129,7 +136,7 @@ export function WsbEmptyState({ variant, onRetry, searchUrl }) {
       <div className="wsb-empty-state__actions">
         {isServerError ? (
           <>
-            <button type="button" className="wsb-empty-state__cta" onClick={onRetry}>
+            <button ref={ctaRef} type="button" className="wsb-empty-state__cta" onClick={onRetry}>
               {ctaLabel}
             </button>
             {searchUrl && (
@@ -139,7 +146,7 @@ export function WsbEmptyState({ variant, onRetry, searchUrl }) {
             )}
           </>
         ) : (
-          <a href={resolvedHref} className="wsb-empty-state__cta">
+          <a ref={ctaRef} href={resolvedHref} className="wsb-empty-state__cta">
             {ctaLabel}
           </a>
         )}
